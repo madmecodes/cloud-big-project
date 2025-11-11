@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ecommerce-config
+  namespace: ecommerce
+data:
+  USER_SERVICE_HOST: "user-service"
+  USER_SERVICE_PORT: "50051"
+  PRODUCT_SERVICE_HOST: "product-service"
+  PRODUCT_SERVICE_PORT: "50052"
+  ORDER_SERVICE_HOST: "order-service"
+  ORDER_SERVICE_PORT: "50053"
+  PAYMENT_SERVICE_HOST: "payment-service"
+  PAYMENT_SERVICE_PORT: "50054"
+  KAFKA_BOOTSTRAP_SERVERS: "msk-kafka-cluster:9092"
+  KAFKA_ORDERS_TOPIC: "orders"
+  KAFKA_RESULTS_TOPIC: "analytics-results"
+  LOG_LEVEL: "info"
+  ENVIRONMENT: "dev"
+  PROMETHEUS_PORT: "8088"
+  METRICS_ENABLED: "true"

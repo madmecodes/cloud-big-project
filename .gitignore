@@ -1,0 +1,93 @@
+# Terraform
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+.terraform/
+.terraform.lock.hcl
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# Go
+*.o
+*.a
+*.so
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Python
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+.venv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Docker
+docker-compose.override.yml
+
+# Kubernetes
+kubeconfig
+kubeconfig.yml
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Certificates
+*.pem
+*.crt
+*.key
+*.p12
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node (if used)
+node_modules/
+package-lock.json
+yarn.lock
+
+# Misc
+.cache/
+.tmp/
+tmp/
+
+# ArgoCD
+.argocd-token
+
+# Credentials
+credentials.json
+serviceAccountKey.json
+aws-credentials.json

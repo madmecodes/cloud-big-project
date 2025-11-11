@@ -1,0 +1,15 @@
+gcp_project_id              = "your-gcp-project-id"
+gcp_region                  = "us-central1"
+project_name                = "ecommerce"
+environment                 = "dev"
+
+subnet_cidr                 = "10.0.0.0/24"
+
+dataproc_master_machine_type = "n1-standard-2"
+dataproc_worker_machine_type = "n1-standard-2"
+dataproc_worker_count       = 2
+dataproc_boot_disk_size_gb  = 50
+
+force_destroy_buckets       = true
+create_cloud_sql            = false
+cloud_sql_tier              = "db-f1-micro"
