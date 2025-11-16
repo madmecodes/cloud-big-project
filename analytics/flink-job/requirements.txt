@@ -1,0 +1,2 @@
+apache-flink==1.18.0
+pyflink==1.18.0

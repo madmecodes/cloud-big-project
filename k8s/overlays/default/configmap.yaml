@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prod-environment
+  namespace: ecommerce
+data:
+  ENVIRONMENT: "prod"
+  LOG_LEVEL: "info"
+  DEBUG_MODE: "false"
+  CACHE_TTL: "3600"
+  DATABASE_CONNECTION_POOL_SIZE: "20"
+  DATABASE_CONNECTION_TIMEOUT: "30"
+  USER_SERVICE_HOST: "user-service.ecommerce.svc.cluster.local"
+  PRODUCT_SERVICE_HOST: "product-service.ecommerce.svc.cluster.local"
+  ORDER_SERVICE_HOST: "order-service.ecommerce.svc.cluster.local"
+  PAYMENT_SERVICE_HOST: "payment-service.ecommerce.svc.cluster.local"
+  KAFKA_BOOTSTRAP_SERVERS: "msk-kafka-cluster:9092"
+  KAFKA_SECURITY_PROTOCOL: "PLAINTEXT"
+  PROMETHEUS_ENABLED: "true"
+  PROMETHEUS_SCRAPE_INTERVAL: "15s"
+  TRACING_ENABLED: "true"
+  JAEGER_AGENT_HOST: "jaeger-agent.monitoring.svc.cluster.local"
+  JAEGER_AGENT_PORT: "6831"
+  ENABLE_PROFILING: "false"
+  MAX_REQUEST_SIZE: "10485760"  # 10MB
+  REQUEST_TIMEOUT: "30000"  # 30 seconds in ms
+  CIRCUIT_BREAKER_ENABLED: "true"
+  CIRCUIT_BREAKER_THRESHOLD: "5"
+  RETRY_MAX_ATTEMPTS: "3"
+  RETRY_BACKOFF_MS: "1000"

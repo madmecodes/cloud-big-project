@@ -1,0 +1,36 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ecommerce-app-of-apps
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/your-org/cloud-bigProject
+    targetRevision: main
+    path: k8s/argocd/apps
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+
+  # This Application manages other Applications
+  # Each child app is defined in k8s/argocd/apps/ directory
+
+---
+# This is the "parent" application that deploys all child applications
+# The apps/ directory should contain separate Application CRDs for:
+# - ecommerce-services.yaml (microservices)
+# - observability.yaml (Prometheus, Grafana, logging)
+# - gitops-tools.yaml (ArgoCD, Flux, etc.)
+# - infrastructure.yaml (Ingress, Network Policies, etc.)

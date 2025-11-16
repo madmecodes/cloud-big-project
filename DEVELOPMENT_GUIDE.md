@@ -514,7 +514,7 @@ spec:
   source:
     repoURL: 'https://github.com/your-org/cloud-bigProject'
     targetRevision: HEAD
-    path: k8s/overlays/dev
+    path: k8s/overlays/default
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: ecommerce

@@ -1,0 +1,201 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Description: 'E-Commerce Notification Service Lambda'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - staging
+      - prod
+
+  SNSTopicArn:
+    Type: String
+    Description: SNS Topic ARN for notifications
+
+  SESVerifiedEmail:
+    Type: String
+    Description: SES verified email address for sending notifications
+    Default: noreply@ecommerce.com
+
+  NotificationsTableName:
+    Type: String
+    Description: DynamoDB table for storing notifications
+    Default: notifications
+
+Globals:
+  Function:
+    Timeout: 60
+    MemorySize: 512
+    Runtime: python3.11
+    Environment:
+      Variables:
+        SNS_TOPIC_ARN: !Ref SNSTopicArn
+        SES_SENDER_EMAIL: !Ref SESVerifiedEmail
+        NOTIFICATIONS_TABLE: !Ref NotificationsTableName
+        ENVIRONMENT: !Ref Environment
+
+Resources:
+  NotificationFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub 'ecommerce-notification-${Environment}'
+      CodeUri: .
+      Handler: lambda_function.lambda_handler
+      Description: Processes order events and sends notifications
+
+      Policies:
+        - Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Action:
+                - sns:Publish
+              Resource: !Ref SNSTopicArn
+
+            - Effect: Allow
+              Action:
+                - ses:SendEmail
+                - ses:SendRawEmail
+              Resource: '*'
+
+            - Effect: Allow
+              Action:
+                - dynamodb:PutItem
+                - dynamodb:GetItem
+                - dynamodb:Query
+              Resource: !GetAtt NotificationsTable.Arn
+
+            - Effect: Allow
+              Action:
+                - logs:CreateLogGroup
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource: 'arn:aws:logs:*:*:*'
+
+      Events:
+        SQSEvent:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt OrderEventQueue.Arn
+            BatchSize: 10
+            MaximumBatchingWindowInSeconds: 5
+
+        KafkaEvent:
+          Type: Msk
+          Properties:
+            Stream: !Sub 'arn:aws:kafka:${AWS::Region}:${AWS::AccountId}:cluster/ecommerce-kafka/*'
+            Topics:
+              - orders
+            BatchSize: 100
+            StartingPosition: LATEST
+            ConsumerGroupId: ecommerce-notifications
+
+      Tags:
+        Environment: !Ref Environment
+        Service: notification
+        ManagedBy: SAM
+
+  NotificationFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/ecommerce-notification-${Environment}'
+      RetentionInDays: 30
+
+  # SQS Queue for orders (integration point from Order Service)
+  OrderEventQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub 'ecommerce-order-events-${Environment}'
+      VisibilityTimeout: 300
+      MessageRetentionPeriod: 1209600  # 14 days
+      ReceiveMessageWaitTimeSeconds: 20
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+
+  # DynamoDB table for storing notifications
+  NotificationsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Ref NotificationsTableName
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: order_id
+          AttributeType: S
+        - AttributeName: timestamp
+          AttributeType: S
+      KeySchema:
+        - AttributeName: order_id
+          KeyType: HASH
+        - AttributeName: timestamp
+          KeyType: RANGE
+      TimeToLiveSpecification:
+        AttributeName: ttl
+        Enabled: true
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+
+  # CloudWatch Alarm for Lambda errors
+  NotificationFunctionErrorAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub 'ecommerce-notification-errors-${Environment}'
+      AlarmDescription: Alert when notification function has errors
+      MetricName: Errors
+      Namespace: AWS/Lambda
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 5
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref NotificationFunction
+
+  # CloudWatch Alarm for Lambda throttling
+  NotificationFunctionThrottleAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub 'ecommerce-notification-throttles-${Environment}'
+      AlarmDescription: Alert when notification function is throttled
+      MetricName: Throttles
+      Namespace: AWS/Lambda
+      Statistic: Sum
+      Period: 60
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Dimensions:
+        - Name: FunctionName
+          Value: !Ref NotificationFunction
+
+Outputs:
+  NotificationFunctionArn:
+    Description: ARN of the Notification Lambda function
+    Value: !GetAtt NotificationFunction.Arn
+    Export:
+      Name: !Sub 'ecommerce-notification-function-arn-${Environment}'
+
+  OrderEventQueueUrl:
+    Description: URL of the SQS queue for order events
+    Value: !Ref OrderEventQueue
+    Export:
+      Name: !Sub 'ecommerce-order-event-queue-url-${Environment}'
+
+  OrderEventQueueArn:
+    Description: ARN of the SQS queue for order events
+    Value: !GetAtt OrderEventQueue.Arn
+    Export:
+      Name: !Sub 'ecommerce-order-event-queue-arn-${Environment}'
+
+  NotificationsTableName:
+    Description: Name of the DynamoDB table for notifications
+    Value: !Ref NotificationsTable
+    Export:
+      Name: !Sub 'ecommerce-notifications-table-${Environment}'

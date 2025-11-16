@@ -1,0 +1,66 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: argocd
+
+# Remote base from official ArgoCD repository
+bases:
+  - github.com/argoproj/argo-cd/manifests/cluster-install?ref=v2.9.0
+
+# Patches for customization
+patchesStrategicMerge:
+  # Patch the argocd-repo-server deployment to increase replicas for HA
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: argocd-repo-server
+      spec:
+        replicas: 2
+
+  # Patch the argocd-application-controller to increase replicas for HA
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: argocd-application-controller
+      spec:
+        replicas: 1
+
+# ConfigMaps to include
+configMapGenerator:
+  - name: argocd-cmd-params-cm
+    files:
+      - argocd-cmd-params.txt
+    behavior: create
+
+# Resources to include from this directory
+resources:
+  - namespace.yaml
+  - argocd-cm.yaml
+  - argocd-rbac.yaml
+
+# Labels to apply to all resources
+commonLabels:
+  app.kubernetes.io/name: argocd
+  app.kubernetes.io/part-of: argocd
+  version: v2.9.0
+
+# Images to use
+images:
+  - name: argoproj/argocd
+    newTag: v2.9.0
+  - name: argoproj/argocd-dex
+    newTag: v2.9.0
+
+# Replica overrides
+replicas:
+  - name: argocd-repo-server
+    count: 2
+  - name: argocd-application-controller
+    count: 1
+
+# Common annotations
+commonAnnotations:
+  "helm.sh/hook": "pre-install"
+  "managed-by": "kustomize"

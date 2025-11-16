@@ -1,0 +1,132 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ecommerce-network-policy
+  namespace: ecommerce
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+
+  # Allow ingress from API Gateway and LoadBalancer
+  ingress:
+    # Allow from ALB/API Gateway
+    - from:
+        - podSelector:
+            matchLabels:
+              app: api-gateway
+      ports:
+        - protocol: TCP
+          port: 8000
+        - protocol: TCP
+          port: 8001
+        - protocol: TCP
+          port: 8003
+        - protocol: TCP
+          port: 8004
+
+    # Allow from monitoring stack
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+      ports:
+        - protocol: TCP
+          port: 9090
+
+    # Allow from ArgoCD
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: argocd
+      ports:
+        - protocol: TCP
+          port: 8000
+
+  # Allow egress to DNS, external APIs, and internal services
+  egress:
+    # Allow DNS
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+
+    # Allow to Kubernetes API
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              component: kube-apiserver
+      ports:
+        - protocol: TCP
+          port: 443
+
+    # Allow internal service communication
+    - to:
+        - podSelector: {}
+      ports:
+        - protocol: TCP
+          port: 50051  # User Service gRPC
+        - protocol: TCP
+          port: 50052  # Product Service gRPC
+        - protocol: TCP
+          port: 50053  # Order Service gRPC
+        - protocol: TCP
+          port: 50054  # Payment Service gRPC
+        - protocol: TCP
+          port: 8000
+        - protocol: TCP
+          port: 8001
+        - protocol: TCP
+          port: 8003
+        - protocol: TCP
+          port: 8004
+
+    # Allow to external services (AWS RDS, S3, Kafka, etc.)
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443   # HTTPS
+        - protocol: TCP
+          port: 5432  # PostgreSQL
+        - protocol: TCP
+          port: 9092  # Kafka
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-from-monitoring
+  namespace: ecommerce
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+      ports:
+        - protocol: TCP
+          port: 9090  # Prometheus metrics
+        - protocol: TCP
+          port: 9095
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-all-default
+  namespace: ecommerce
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress

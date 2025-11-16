@@ -1,0 +1,54 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ecommerce-services
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  # Use project with any namespace allowed
+  project: default
+
+  source:
+    repoURL: https://github.com/your-org/cloud-bigProject
+    targetRevision: main
+    path: k8s/overlays/default
+
+    # Use Kustomize to manage overlays
+    plugin:
+      name: kustomize
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ecommerce
+
+  syncPolicy:
+    # Automatically sync when Git changes are detected
+    automated:
+      prune: true      # Delete resources not in Git
+      selfHeal: true   # Sync every 3 minutes if out of sync
+      allowEmpty: false  # Don't allow empty diffs
+
+    # Sync options for better control
+    syncOptions:
+      - CreateNamespace=true
+      - RespectIgnoreDifferences=true
+      - Validate=true
+
+    # Retry policy for failed syncs
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+  # Health assessment rules
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas  # Ignore replica count differences (HPA managed)
+
+  # Sync waves for ordered rollout
+  # Services are deployed in order of syncWave annotation (0, 1, 2, etc.)

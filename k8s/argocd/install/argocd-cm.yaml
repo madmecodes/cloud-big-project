@@ -1,0 +1,184 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cmd-params-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-cmd-params
+    app.kubernetes.io/part-of: argocd
+data:
+  # Application instanceLabelKey is the key name where Argo CD injects the application name as a tracking label.
+  application.instanceLabelKey: argocd.argoproj.io/instance
+
+  # Dex server hostname for OIDC (if using external auth)
+  dex.server: http://argocd-dex-server:5556
+
+  # Help text for the Argo CD server
+  server.disable.auth: 'false'
+  server.insecure: 'false'
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-rbac-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-rbac-cm
+    app.kubernetes.io/part-of: argocd
+data:
+  # RBAC policy rules
+  policy.default: role:readonly
+
+  # Policy for project users
+  policy.csv: |
+    # Default policy
+    p, role:readonly, applications, get, */*, allow
+    p, role:readonly, repositories, get, *, allow
+    p, role:readonly, logs, get, */*, allow
+
+    # Admin policy
+    p, role:admin, *, *, */*, allow
+
+    # Developer policy - can only sync/view specific apps
+    p, role:developer, applications, get, ecommerce-platform/*, allow
+    p, role:developer, applications, sync, ecommerce-platform/*, allow
+    p, role:developer, applications, update, ecommerce-platform/*, allow
+
+    # Ops policy - full access to ecommerce namespace
+    p, role:ops, applications, *, ecommerce-platform/*, allow
+    p, role:ops, repositories, *, *, allow
+
+    # Role bindings
+    g, admin-users, role:admin
+    g, developer-users, role:developer
+    g, ops-users, role:ops
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-ssh-known-hosts-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-ssh-known-hosts-cm
+    app.kubernetes.io/part-of: argocd
+data:
+  ssh_known_hosts: |
+    github.com ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBEmKSENjQwcKllmDy9u6zWx0MD3eS1ENJBQaOcmqSJAu9ZeEuan34OMEVrcyO2TPL0XwC+FapFjH7SEim3dPjGE=
+    gitlab.com ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBFSMzNOWGRVSubGd7vchu63eK1xNLhnDbtYYUhXiFMsUWvim1qHaveYjV1TF7vNeqKjvnHirMv2iNXvMXXN+qKE=
+    bitbucket.org ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAubiN81eDcCgqsDA+YOixVtH5p5Z0zV3f8jdPc72irbQptxJPLVW4+tWggMH73th5/kLtpJIcUGealternatives=
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-tls-certs-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-tls-certs-cm
+    app.kubernetes.io/part-of: argocd
+data:
+  # Custom TLS certificates for connecting to private registries or git servers
+  # Add certificates in PEM format here
+  argocd-server-tls: ""
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-gpg-keys-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-gpg-keys-cm
+    app.kubernetes.io/part-of: argocd
+data:
+  # GPG public keys for signed commits verification
+  # Add GPG keys in PEM format here
+  argocd.gpg.pub: ""
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-server-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-server-cm
+    app.kubernetes.io/part-of: argocd
+data:
+  # Argo CD server configuration
+
+  # URL base for Argo CD server
+  url: https://argocd.ecommerce.local
+
+  # Insecure mode (http instead of https) - set to false in production
+  insecure: 'false'
+
+  # Application instances in any namespace (not just argocd)
+  application.instanceLabelKey: argocd.argoproj.io/instance
+
+  # Google Analytics tracking code (optional)
+  # ga.trackingid: ''
+
+  # Help link (optional)
+  help.link: https://argo-cd.readthedocs.io
+
+  # Redirect URL from Dex (if using OIDC)
+  # dex.server: http://dex-server:5556
+
+  # Log format (json or text)
+  log.format: json
+
+  # Log level (debug, info, warn, error)
+  log.level: info
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-repo-server-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-repo-server-cm
+    app.kubernetes.io/part-of: argocd
+data:
+  # Repository server configuration
+
+  # TLS certificate for repo server (if needed)
+  tls.key: ""
+  tls.crt: ""
+
+  # Log format and level
+  log.format: json
+  log.level: info
+
+  # Maximum size for git operations (in MB)
+  # git.max.buffer.size: 256
+
+  # Cache cleanup interval
+  cache.cleanup.interval: 24h
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-application-controller-cm
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-application-controller-cm
+    app.kubernetes.io/part-of: argocd
+data:
+  # Application controller configuration
+
+  # Status badge
+  application.instanceLabelKey: argocd.argoproj.io/instance
+
+  # Auto-sync settings
+  # sync.interval: 180s
+
+  # Timeout for git clone operations
+  repo.server.timeout.seconds: 60
+
+  # Log level
+  log.level: info

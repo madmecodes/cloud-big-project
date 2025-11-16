@@ -1,0 +1,126 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Base configuration
+bases:
+  - ../../base
+
+# Namespace for ecommerce
+namespace: ecommerce
+
+# Images (specific versions, not latest)
+images:
+  - name: ecommerce/api-gateway
+    newTag: v1.0.0
+  - name: ecommerce/user-service
+    newTag: v1.0.0
+  - name: ecommerce/product-service
+    newTag: v1.0.0
+  - name: ecommerce/order-service
+    newTag: v1.0.0
+  - name: ecommerce/payment-service
+    newTag: v1.0.0
+
+# Replicas configuration
+replicas:
+  - name: api-gateway
+    count: 3
+  - name: user-service
+    count: 2
+  - name: product-service
+    count: 2
+  - name: order-service
+    count: 2
+  - name: payment-service
+    count: 2
+
+# Resource limits
+patchesJson6902:
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: api-gateway
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources
+        value:
+          requests:
+            cpu: 250m
+            memory: 256Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+      - op: replace
+        path: /spec/template/spec/containers/0/env
+        value:
+          - name: LOG_LEVEL
+            value: "info"
+          - name: ENVIRONMENT
+            value: "production"
+          - name: METRICS_ENABLED
+            value: "true"
+          - name: CACHE_TTL
+            value: "3600"
+
+  - target:
+      group: apps
+      version: v1
+      kind: Deployment
+      name: order-service
+    patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources
+        value:
+          requests:
+            cpu: 250m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 2Gi
+
+# HPA configuration
+patchesStrategicMerge:
+  - apiVersion: autoscaling/v2
+    kind: HorizontalPodAutoscaler
+    metadata:
+      name: order-service-hpa
+    spec:
+      minReplicas: 3
+      maxReplicas: 20
+
+  - apiVersion: autoscaling/v2
+    kind: HorizontalPodAutoscaler
+    metadata:
+      name: payment-service-hpa
+    spec:
+      minReplicas: 3
+      maxReplicas: 15
+
+# Common labels
+commonLabels:
+  environment: production
+  app.kubernetes.io/part-of: ecommerce-platform
+
+# Common annotations
+commonAnnotations:
+  environment: "production"
+  gitops: "argocd"
+  managed-by: "argocd"
+  sync-wave: "0"
+
+# Custom resources
+resources:
+  - configmap.yaml
+  - networkpolicy.yaml
+
+# ConfigMaps
+configMapGenerator:
+  - name: env-config
+    literals:
+      - ENVIRONMENT=production
+      - LOG_LEVEL=info
+      - METRICS_ENABLED=true
+      - CACHE_TTL=3600
+      - DATABASE_CONNECTION_POOL_SIZE=20
+    behavior: create
