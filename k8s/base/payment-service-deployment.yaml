@@ -18,7 +18,7 @@ spec:
         version: v1
       annotations:
         prometheus.io/scrape: "true"
-        prometheus.io/port: "50054"
+        prometheus.io/port: "9090"
         prometheus.io/path: "/metrics"
     spec:
       imagePullSecrets:
@@ -28,9 +28,6 @@ spec:
         image: ecommerce/payment-service:latest
         imagePullPolicy: IfNotPresent
         ports:
-        - containerPort: 50054
-          name: grpc
-          protocol: TCP
         - containerPort: 8004
           name: http
           protocol: TCP
@@ -38,9 +35,7 @@ spec:
           name: metrics
           protocol: TCP
         env:
-        - name: GRPC_PORT
-          value: "50054"
-        - name: HTTP_PORT
+        - name: PORT
           value: "8004"
         - name: DATABASE_URL
           valueFrom:
@@ -58,15 +53,17 @@ spec:
               name: ecommerce-config
               key: LOG_LEVEL
         livenessProbe:
-          exec:
-            command: ["/bin/sh", "-c", "grpcurl -plaintext localhost:50054 payment.PaymentService.HealthCheck || exit 1"]
+          httpGet:
+            path: /health
+            port: 8004
           initialDelaySeconds: 15
           periodSeconds: 10
           timeoutSeconds: 5
           failureThreshold: 3
         readinessProbe:
-          exec:
-            command: ["/bin/sh", "-c", "grpcurl -plaintext localhost:50054 payment.PaymentService.HealthCheck || exit 1"]
+          httpGet:
+            path: /health
+            port: 8004
           initialDelaySeconds: 10
           periodSeconds: 5
           timeoutSeconds: 3
@@ -96,10 +93,6 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - port: 50054
-    targetPort: 50054
-    protocol: TCP
-    name: grpc
   - port: 8004
     targetPort: 8004
     protocol: TCP

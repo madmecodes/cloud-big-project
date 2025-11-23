@@ -18,7 +18,7 @@ spec:
         version: v1
       annotations:
         prometheus.io/scrape: "true"
-        prometheus.io/port: "8001"
+        prometheus.io/port: "9090"
         prometheus.io/path: "/metrics"
     spec:
       imagePullSecrets:
@@ -28,9 +28,6 @@ spec:
         image: ecommerce/product-service:latest
         imagePullPolicy: IfNotPresent
         ports:
-        - containerPort: 50052
-          name: grpc
-          protocol: TCP
         - containerPort: 8001
           name: http
           protocol: TCP
@@ -40,8 +37,6 @@ spec:
         env:
         - name: PORT
           value: "8001"
-        - name: GRPC_PORT
-          value: "50052"
         - name: DATABASE_URL
           valueFrom:
             secretKeyRef:

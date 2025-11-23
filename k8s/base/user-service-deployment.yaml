@@ -18,7 +18,7 @@ spec:
         version: v1
       annotations:
         prometheus.io/scrape: "true"
-        prometheus.io/port: "50051"
+        prometheus.io/port: "9090"
         prometheus.io/path: "/metrics"
     spec:
       imagePullSecrets:
@@ -28,15 +28,15 @@ spec:
         image: ecommerce/user-service:latest
         imagePullPolicy: IfNotPresent
         ports:
-        - containerPort: 50051
-          name: grpc
+        - containerPort: 8001
+          name: http
           protocol: TCP
         - containerPort: 9090
           name: metrics
           protocol: TCP
         env:
-        - name: GRPC_PORT
-          value: "50051"
+        - name: PORT
+          value: "8001"
         - name: DATABASE_URL
           valueFrom:
             secretKeyRef:
@@ -48,15 +48,17 @@ spec:
               name: ecommerce-config
               key: LOG_LEVEL
         livenessProbe:
-          exec:
-            command: ["/bin/sh", "-c", "grpcurl -plaintext localhost:50051 user.UserService.GetUser || exit 1"]
+          httpGet:
+            path: /health
+            port: 8001
           initialDelaySeconds: 15
           periodSeconds: 10
           timeoutSeconds: 5
           failureThreshold: 3
         readinessProbe:
-          exec:
-            command: ["/bin/sh", "-c", "grpcurl -plaintext localhost:50051 user.UserService.GetUser || exit 1"]
+          httpGet:
+            path: /health
+            port: 8001
           initialDelaySeconds: 10
           periodSeconds: 5
           timeoutSeconds: 3
@@ -80,9 +82,9 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - port: 50051
-    targetPort: 50051
+  - port: 8001
+    targetPort: 8001
     protocol: TCP
-    name: grpc
+    name: http
   selector:
     app: user-service
