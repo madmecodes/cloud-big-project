@@ -22,7 +22,8 @@ spec:
         prometheus.io/path: "/metrics"
     spec:
       imagePullSecrets:
-      - name: ecr-secret      containers:
+      - name: ecr-secret
+      containers:
       - name: api-gateway
         image: ecommerce/api-gateway:latest
         imagePullPolicy: IfNotPresent
