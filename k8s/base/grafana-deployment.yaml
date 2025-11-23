@@ -14,6 +14,13 @@ data:
       isDefault: true
       editable: true
 
+    - name: Loki
+      type: loki
+      access: proxy
+      url: http://loki:3100
+      isDefault: false
+      editable: true
+
 ---
 apiVersion: apps/v1
 kind: Deployment

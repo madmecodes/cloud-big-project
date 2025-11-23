@@ -1,0 +1,278 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: promtail-config
+  namespace: monitoring
+data:
+  promtail-config.yaml: |
+    server:
+      http_listen_port: 3101
+      log_level: info
+
+    clients:
+    - url: http://loki:3100/loki/api/v1/push
+
+    positions:
+      filename: /tmp/positions.yaml
+
+    scrape_configs:
+    # Scrape Kubernetes pod logs
+    - job_name: kubernetes-pods
+      kubernetes_sd_configs:
+      - role: pod
+
+      relabel_configs:
+      # Extract namespace
+      - source_labels: [__meta_kubernetes_namespace]
+        target_label: namespace
+
+      # Extract pod name
+      - source_labels: [__meta_kubernetes_pod_name]
+        target_label: pod
+
+      # Extract container name
+      - source_labels: [__meta_kubernetes_container_name]
+        target_label: container
+
+      # Extract pod labels
+      - source_labels: [__meta_kubernetes_pod_label_app]
+        target_label: app
+
+      - source_labels: [__meta_kubernetes_pod_label_version]
+        target_label: version
+
+      # Pod UID for uniqueness
+      - source_labels: [__meta_kubernetes_pod_uid]
+        target_label: pod_uid
+
+      # Node name
+      - source_labels: [__meta_kubernetes_node_name]
+        target_label: node
+
+      # Extract log path
+      - source_labels: [__meta_kubernetes_pod_container_port_name]
+        target_label: port_name
+
+      pipeline_stages:
+      # Parse JSON logs if present
+      - json:
+          expressions:
+            timestamp: timestamp
+            level: level
+            message: message
+            service: service
+
+      # Add timestamp if not present
+      - timestamp:
+          source: timestamp
+          format: RFC3339Nano
+          fallback_formats:
+          - RFC3339
+          - ISO8601
+          - "2006-01-02 15:04:05"
+
+      # Add labels for log levels
+      - labels:
+          level:
+          service:
+
+    # Scrape Kubernetes system logs
+    - job_name: kubernetes-system
+      kubernetes_sd_configs:
+      - role: pod
+        namespaces:
+          names:
+          - kube-system
+          - kube-public
+          - kube-node-lease
+
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_namespace]
+        target_label: namespace
+
+      - source_labels: [__meta_kubernetes_pod_name]
+        target_label: pod
+
+      - source_labels: [__meta_kubernetes_container_name]
+        target_label: container
+
+      - source_labels: [__meta_kubernetes_node_name]
+        target_label: node
+
+    # Scrape monitoring namespace (prometheus, grafana logs)
+    - job_name: monitoring-stack
+      kubernetes_sd_configs:
+      - role: pod
+        namespaces:
+          names:
+          - monitoring
+
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_namespace]
+        target_label: namespace
+
+      - source_labels: [__meta_kubernetes_pod_name]
+        target_label: pod
+
+      - source_labels: [__meta_kubernetes_container_name]
+        target_label: container
+
+      - source_labels: [__meta_kubernetes_pod_label_app]
+        target_label: app
+
+      pipeline_stages:
+      - labels:
+          container:
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: promtail
+  namespace: monitoring
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: promtail
+rules:
+- apiGroups: [""]
+  resources:
+  - nodes
+  - nodes/proxy
+  - services
+  - endpoints
+  - pods
+  verbs: ["get", "list", "watch"]
+- apiGroups:
+  - extensions
+  resources:
+  - ingresses
+  verbs: ["get", "list", "watch"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: promtail
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: promtail
+subjects:
+- kind: ServiceAccount
+  name: promtail
+  namespace: monitoring
+
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: promtail
+  namespace: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: promtail
+  template:
+    metadata:
+      labels:
+        app: promtail
+    spec:
+      serviceAccountName: promtail
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        effect: NoSchedule
+      - key: node-role.kubernetes.io/control-plane
+        effect: NoSchedule
+
+      containers:
+      - name: promtail
+        image: grafana/promtail:2.9.0
+        imagePullPolicy: IfNotPresent
+
+        args:
+        - -config.file=/etc/promtail/promtail-config.yaml
+
+        env:
+        - name: HOSTNAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+
+        ports:
+        - name: http
+          containerPort: 3101
+          protocol: TCP
+
+        volumeMounts:
+        - name: config
+          mountPath: /etc/promtail
+        - name: varlog
+          mountPath: /var/log
+        - name: varlibdockercontainers
+          mountPath: /var/lib/docker/containers
+          readOnly: true
+        - name: positions
+          mountPath: /tmp
+
+        livenessProbe:
+          httpGet:
+            path: /ready
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 1
+          failureThreshold: 3
+
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 1
+          failureThreshold: 3
+
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+
+      volumes:
+      - name: config
+        configMap:
+          name: promtail-config
+
+      - name: varlog
+        hostPath:
+          path: /var/log
+
+      - name: varlibdockercontainers
+        hostPath:
+          path: /var/lib/docker/containers
+
+      - name: positions
+        emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: promtail
+  namespace: monitoring
+  labels:
+    app: promtail
+spec:
+  ports:
+  - name: http
+    port: 3101
+    targetPort: 3101
+    protocol: TCP
+  selector:
+    app: promtail
+  clusterIP: None

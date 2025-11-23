@@ -26,7 +26,6 @@ provider "aws" {
       Environment = var.environment
       Project     = "ecommerce-platform"
       ManagedBy   = "Terraform"
-      CreatedAt   = timestamp()
     }
   }
 }
@@ -167,12 +166,8 @@ module "msk" {
   instance_type             = var.msk_instance_type
   ebs_storage_size          = var.msk_ebs_storage_gb
   vpc_id                    = module.vpc.vpc_id
-  subnet_ids                = module.vpc.private_subnet_ids
-
   client_subnets            = module.vpc.private_subnet_ids
   security_group_cidrs      = [var.vpc_cidr]
-
-  broker_logs_enabled       = true
   cloudwatch_logs_enabled   = true
   s3_logs_enabled           = false
 

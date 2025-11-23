@@ -56,9 +56,9 @@ resource "google_storage_bucket" "flink_code" {
     ignore_changes = [uniform_bucket_level_access]
   }
 
-  tags = {
-    Environment = var.environment
-    Project     = var.project_name
+  labels = {
+    environment = var.environment
+    project     = var.project_name
   }
 }
 
@@ -74,9 +74,9 @@ resource "google_storage_bucket" "analytics_results" {
     ignore_changes = [uniform_bucket_level_access]
   }
 
-  tags = {
-    Environment = var.environment
-    Project     = var.project_name
+  labels = {
+    environment = var.environment
+    project     = var.project_name
   }
 }
 
@@ -120,8 +120,7 @@ resource "google_dataproc_cluster" "analytics" {
     }
 
     gce_cluster_config {
-      network           = google_compute_network.main.name
-      subnetwork        = google_compute_subnetwork.main.name
+      subnetwork        = google_compute_subnetwork.main.id
       internal_ip_only  = false
       service_account_scopes = [
         "https://www.googleapis.com/auth/cloud-platform"

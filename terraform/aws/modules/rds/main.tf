@@ -53,7 +53,7 @@ resource "aws_db_instance" "main" {
   skip_final_snapshot       = var.skip_final_snapshot
   final_snapshot_identifier = var.skip_final_snapshot ? null : "${var.instance_identifier}-final-snapshot-${formatdate("YYYY-MM-DD-hhmm", timestamp())}"
 
-  enable_cloudwatch_logs_exports = ["postgresql"]
+  enabled_cloudwatch_logs_exports = ["postgresql"]
   copy_tags_to_snapshot          = true
   deletion_protection            = var.deletion_protection
 
