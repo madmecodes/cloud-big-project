@@ -8,21 +8,10 @@ resources:
   - configmap.yaml
   - secrets.yaml
   - user-service-deployment.yaml
-  - user-service-service.yaml
   - api-gateway-deployment.yaml
-  - api-gateway-service.yaml
   - product-service-deployment.yaml
-  - product-service-service.yaml
   - order-service-deployment.yaml
-  - order-service-service.yaml
-  - order-service-hpa.yaml
   - payment-service-deployment.yaml
-  - payment-service-service.yaml
-  - payment-service-hpa.yaml
-  - prometheus-deployment.yaml
-  - prometheus-service.yaml
-  - grafana-deployment.yaml
-  - grafana-service.yaml
 
 commonLabels:
   app.kubernetes.io/part-of: ecommerce-platform

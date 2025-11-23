@@ -84,23 +84,6 @@ patchesJson6902:
             cpu: 1000m
             memory: 2Gi
 
-# HPA configuration
-patchesStrategicMerge:
-  - apiVersion: autoscaling/v2
-    kind: HorizontalPodAutoscaler
-    metadata:
-      name: order-service-hpa
-    spec:
-      minReplicas: 3
-      maxReplicas: 20
-
-  - apiVersion: autoscaling/v2
-    kind: HorizontalPodAutoscaler
-    metadata:
-      name: payment-service-hpa
-    spec:
-      minReplicas: 3
-      maxReplicas: 15
 
 # Common labels
 commonLabels:
