@@ -47,6 +47,7 @@ jobs:
           docker buildx build \
             --platform linux/amd64 \
             --push \
+            --no-cache \
             -t ${{ env.ECR_REGISTRY }}/ecommerce/${{ matrix.service }}:${IMAGE_TAG} \
             -t ${{ env.ECR_REGISTRY }}/ecommerce/${{ matrix.service }}:latest \
             -f services/${{ matrix.service }}/Dockerfile \
