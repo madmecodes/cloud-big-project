@@ -183,7 +183,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Product Service",
     description="Microservice for managing product catalog",
-    version="1.0.0",
+    version="1.0.1",
     lifespan=lifespan
 )
 
