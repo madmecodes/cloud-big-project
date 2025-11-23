@@ -28,16 +28,37 @@ DATABASE_URL = os.getenv(
     "postgresql://admin:password@localhost:5432/ecommerce"
 )
 
-engine = create_engine(
-    DATABASE_URL,
-    echo=False,
-    pool_pre_ping=True,
-    pool_size=10,
-    max_overflow=20
-)
-
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# Initialize engine and SessionLocal as None - will be created on first use
+engine = None
+SessionLocal = None
 Base = declarative_base()
+
+def get_engine():
+    global engine
+    if engine is None:
+        try:
+            engine = create_engine(
+                DATABASE_URL,
+                echo=False,
+                pool_pre_ping=True,
+                pool_size=10,
+                max_overflow=20
+            )
+            logger.info(f"Database engine initialized with {DATABASE_URL}")
+        except Exception as e:
+            logger.error(f"Failed to create database engine: {e}")
+            # Return None to allow the app to start even if DB fails
+            return None
+    return engine
+
+def get_session():
+    global SessionLocal
+    if SessionLocal is None:
+        eng = get_engine()
+        if eng is None:
+            return None
+        SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=eng)
+    return SessionLocal()
 
 # Models
 class Product(Base):
@@ -133,18 +154,28 @@ def get_s3_client():
 
 # Dependencies
 def get_db():
-    db = SessionLocal()
+    db = get_session()
+    if db is None:
+        logger.warning("Database connection failed, using mock response mode")
+        return None
     try:
         yield db
     finally:
-        db.close()
+        if db:
+            db.close()
 
 # FastAPI app
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
     logger.info("Product Service starting up")
-    Base.metadata.create_all(bind=engine)
+    eng = get_engine()
+    if eng is not None:
+        try:
+            Base.metadata.create_all(bind=eng)
+            logger.info("Database tables created/verified")
+        except Exception as e:
+            logger.warning(f"Failed to create tables: {e}. Service will run without database.")
     yield
     # Shutdown
     logger.info("Product Service shutting down")
