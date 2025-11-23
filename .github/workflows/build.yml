@@ -1,0 +1,73 @@
+name: Build and Push Docker Images
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'services/**'
+      - '.github/workflows/build.yml'
+
+env:
+  AWS_REGION: ap-south-1
+  ECR_REGISTRY: 767828743009.dkr.ecr.ap-south-1.amazonaws.com
+  AWS_ACCOUNT_ID: 767828743009
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service:
+          - api-gateway
+          - user-service
+          - product-service
+          - order-service
+          - payment-service
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        run: |
+          aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ env.ECR_REGISTRY }}
+
+      - name: Build and push ${{ matrix.service }}
+        run: |
+          IMAGE_TAG=${{ github.sha }}
+          docker buildx build \
+            --platform linux/amd64 \
+            --push \
+            -t ${{ env.ECR_REGISTRY }}/ecommerce/${{ matrix.service }}:${IMAGE_TAG} \
+            -t ${{ env.ECR_REGISTRY }}/ecommerce/${{ matrix.service }}:latest \
+            -f services/${{ matrix.service }}/Dockerfile \
+            services/${{ matrix.service }}/
+          echo "IMAGE_TAG=${IMAGE_TAG}" >> $GITHUB_ENV
+
+  update-kustomization:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update kustomization.yaml
+        run: |
+          IMAGE_TAG=${{ github.sha }}
+
+          sed -i "s|newTag: .*|newTag: ${IMAGE_TAG}|g" k8s/overlays/default/kustomization.yaml
+
+      - name: Commit and push
+        run: |
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Actions"
+          git add k8s/overlays/default/kustomization.yaml
+          git commit -m "ci: update image tags to ${{ github.sha }}" || echo "No changes to commit"
+          git push
