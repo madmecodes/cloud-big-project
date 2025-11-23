@@ -69,7 +69,7 @@ module "rds" {
 
   instance_identifier      = "${var.project_name}-db"
   engine                   = "postgres"
-  engine_version           = "15.3"
+  engine_version           = "15.15"
   instance_class           = var.rds_instance_class
   allocated_storage         = var.rds_storage_gb
   db_name                  = "ecommerce"

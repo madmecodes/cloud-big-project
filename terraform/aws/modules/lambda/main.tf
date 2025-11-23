@@ -29,7 +29,7 @@ resource "aws_iam_role_policy_attachment" "vpc_execution" {
 }
 
 resource "aws_lambda_function" "main" {
-  filename         = "lambda_placeholder.zip"
+  filename         = "${path.module}/lambda_placeholder.zip"
   function_name    = var.function_name
   role             = aws_iam_role.lambda.arn
   handler          = var.handler
