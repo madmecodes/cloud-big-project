@@ -204,7 +204,6 @@ async def metrics():
     return generate_latest()
 
 @app.get("/api/v1/products", response_model=List[ProductResponse], tags=["Products"])
-@product_latency.time()
 async def list_products(
     skip: int = Query(0, ge=0),
     limit: int = Query(10, ge=1, le=100),
@@ -230,7 +229,6 @@ async def list_products(
         raise HTTPException(status_code=500, detail="Database error")
 
 @app.get("/api/v1/products/{product_id}", response_model=ProductResponse, tags=["Products"])
-@product_latency.time()
 async def get_product(product_id: str, db: Session = Depends(get_db)):
     """Get a specific product by ID"""
     try:
@@ -251,7 +249,6 @@ async def get_product(product_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail="Database error")
 
 @app.post("/api/v1/products", response_model=ProductResponse, status_code=201, tags=["Products"])
-@product_latency.time()
 async def create_product(
     product: ProductCreate,
     db: Session = Depends(get_db)
@@ -288,7 +285,6 @@ async def create_product(
         raise HTTPException(status_code=500, detail="Database error")
 
 @app.put("/api/v1/products/{product_id}", response_model=ProductResponse, tags=["Products"])
-@product_latency.time()
 async def update_product(
     product_id: str,
     product_update: ProductUpdate,
@@ -324,7 +320,6 @@ async def update_product(
         raise HTTPException(status_code=500, detail="Database error")
 
 @app.delete("/api/v1/products/{product_id}", status_code=204, tags=["Products"])
-@product_latency.time()
 async def delete_product(product_id: str, db: Session = Depends(get_db)):
     """Delete a product"""
     try:
@@ -351,7 +346,6 @@ async def delete_product(product_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail="Database error")
 
 @app.get("/api/v1/products/{product_id}/stock", tags=["Products"])
-@product_latency.time()
 async def get_product_stock(product_id: str, db: Session = Depends(get_db)):
     """Get product stock information"""
     try:
@@ -374,7 +368,6 @@ async def get_product_stock(product_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail="Database error")
 
 @app.post("/api/v1/products/{product_id}/reserve", tags=["Products"])
-@product_latency.time()
 async def reserve_product_stock(
     product_id: str,
     quantity: int = Query(..., gt=0),
