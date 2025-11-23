@@ -72,20 +72,20 @@ async def get_user(user_id: str):
 @app.get("/api/v1/products")
 async def list_products():
     async with httpx.AsyncClient() as client:
-        response = await client.get(f"{PRODUCT_SERVICE_URL}/products")
+        response = await client.get(f"{PRODUCT_SERVICE_URL}/api/v1/products")
         return response.json()
 
 @app.get("/api/v1/products/{product_id}")
 async def get_product(product_id: str):
     async with httpx.AsyncClient() as client:
-        response = await client.get(f"{PRODUCT_SERVICE_URL}/products/{product_id}")
+        response = await client.get(f"{PRODUCT_SERVICE_URL}/api/v1/products/{product_id}")
         return response.json()
 
 @app.post("/api/v1/products")
 async def create_product(request: Request):
     async with httpx.AsyncClient() as client:
         body = await request.json()
-        response = await client.post(f"{PRODUCT_SERVICE_URL}/products", json=body)
+        response = await client.post(f"{PRODUCT_SERVICE_URL}/api/v1/products", json=body)
         return response.json()
 
 # Order Service Proxy
@@ -93,19 +93,19 @@ async def create_product(request: Request):
 async def create_order(request: Request):
     async with httpx.AsyncClient() as client:
         body = await request.json()
-        response = await client.post(f"{ORDER_SERVICE_URL}/orders", json=body, timeout=30.0)
+        response = await client.post(f"{ORDER_SERVICE_URL}/api/v1/orders", json=body, timeout=30.0)
         return response.json()
 
 @app.get("/api/v1/orders/{order_id}")
 async def get_order(order_id: str):
     async with httpx.AsyncClient() as client:
-        response = await client.get(f"{ORDER_SERVICE_URL}/orders/{order_id}")
+        response = await client.get(f"{ORDER_SERVICE_URL}/api/v1/orders/{order_id}")
         return response.json()
 
 @app.get("/api/v1/orders/user/{user_id}")
 async def get_user_orders(user_id: str):
     async with httpx.AsyncClient() as client:
-        response = await client.get(f"{ORDER_SERVICE_URL}/orders/user/{user_id}")
+        response = await client.get(f"{ORDER_SERVICE_URL}/api/v1/orders/user/{user_id}")
         return response.json()
 
 # Payment Service Proxy
@@ -113,13 +113,13 @@ async def get_user_orders(user_id: str):
 async def process_payment(request: Request):
     async with httpx.AsyncClient() as client:
         body = await request.json()
-        response = await client.post(f"{PAYMENT_SERVICE_URL}/payments", json=body)
+        response = await client.post(f"{PAYMENT_SERVICE_URL}/api/v1/payments", json=body)
         return response.json()
 
 @app.get("/api/v1/payments/{payment_id}")
 async def get_payment(payment_id: str):
     async with httpx.AsyncClient() as client:
-        response = await client.get(f"{PAYMENT_SERVICE_URL}/payments/{payment_id}")
+        response = await client.get(f"{PAYMENT_SERVICE_URL}/api/v1/payments/{payment_id}")
         return response.json()
 
 if __name__ == "__main__":
