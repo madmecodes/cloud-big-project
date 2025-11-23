@@ -12,6 +12,9 @@ env:
   ECR_REGISTRY: 767828743009.dkr.ecr.ap-south-1.amazonaws.com
   AWS_ACCOUNT_ID: 767828743009
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
