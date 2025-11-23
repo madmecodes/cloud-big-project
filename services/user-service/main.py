@@ -1,124 +1,157 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
-from fastapi.responses import Response
 import os
 import uuid
-import hashlib
 import logging
 from datetime import datetime
 from typing import Optional
 
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import Response
+from pydantic import BaseModel
+from sqlalchemy import create_engine, Column, String, DateTime, func
+from sqlalchemy.orm import sessionmaker, declarative_base
+from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Database
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://admin:password@localhost:5432/ecommerce")
+
+engine = None
+SessionLocal = None
+Base = declarative_base()
+
+def get_engine():
+    global engine
+    if engine is None:
+        try:
+            engine = create_engine(DATABASE_URL, pool_pre_ping=True, pool_size=5)
+            logger.info("Database connected")
+        except Exception as e:
+            logger.error(f"Database connection failed: {e}")
+            return None
+    return engine
+
+def get_db():
+    global SessionLocal
+    if SessionLocal is None:
+        eng = get_engine()
+        if eng:
+            SessionLocal = sessionmaker(bind=eng)
+    if SessionLocal:
+        return SessionLocal()
+    return None
+
+# User Model
+class User(Base):
+    __tablename__ = "users"
+    id = Column(String, primary_key=True)
+    name = Column(String(255), nullable=False)
+    email = Column(String(255), unique=True, nullable=False)
+    phone = Column(String(20))
+    created_at = Column(DateTime, server_default=func.now())
+
+# Pydantic Models
+class UserCreate(BaseModel):
+    name: str
+    email: str
+    phone: Optional[str] = None
+
+class UserResponse(BaseModel):
+    id: str
+    name: str
+    email: str
+    phone: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+# Metrics
+REQUEST_COUNT = Counter('user_service_requests_total', 'Total requests', ['method', 'endpoint'])
+
 app = FastAPI(title="User Service", version="1.0.0")
 
-# Prometheus metrics
-REQUEST_COUNT = Counter('user_service_requests_total', 'Total requests', ['method', 'endpoint'])
-USER_CREATED = Counter('users_created_total', 'Total users created')
-
-# In-memory storage (in production, use PostgreSQL via DATABASE_URL)
-users_db = {}
-tokens_db = {}
-
-DATABASE_URL = os.getenv("DATABASE_URL", "")
-
-class UserCreate(BaseModel):
-    email: str
-    password: str
-    name: str
-
-class UserLogin(BaseModel):
-    email: str
-    password: str
-
-class User(BaseModel):
-    id: str
-    email: str
-    name: str
-    created_at: str
-
-def hash_password(password: str) -> str:
-    return hashlib.sha256(password.encode()).hexdigest()
+@app.on_event("startup")
+def startup():
+    eng = get_engine()
+    if eng:
+        Base.metadata.create_all(bind=eng)
+        logger.info("Database tables created")
 
 @app.get("/health")
-async def health():
+def health():
     return {"status": "healthy", "service": "user-service"}
 
 @app.get("/metrics")
-async def metrics():
+def metrics():
     return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
-@app.post("/auth/login")
-async def login(credentials: UserLogin):
-    REQUEST_COUNT.labels(method="POST", endpoint="/auth/login").inc()
-
-    for user_id, user in users_db.items():
-        if user["email"] == credentials.email:
-            if user["password_hash"] == hash_password(credentials.password):
-                token = str(uuid.uuid4())
-                tokens_db[token] = user_id
-                return {"token": token, "user_id": user_id, "message": "Login successful"}
-
-    raise HTTPException(status_code=401, detail="Invalid credentials")
-
-@app.post("/users", response_model=User)
-async def create_user(user_data: UserCreate):
+@app.post("/users", response_model=UserResponse, status_code=201)
+def create_user(user: UserCreate):
     REQUEST_COUNT.labels(method="POST", endpoint="/users").inc()
+    db = get_db()
+    if not db:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+    try:
+        existing = db.query(User).filter(User.email == user.email).first()
+        if existing:
+            raise HTTPException(status_code=409, detail="Email already exists")
+        new_user = User(id=str(uuid.uuid4()), name=user.name, email=user.email, phone=user.phone)
+        db.add(new_user)
+        db.commit()
+        db.refresh(new_user)
+        logger.info(f"User created: {new_user.id}")
+        return new_user
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        db.close()
 
-    # Check if email already exists
-    for user in users_db.values():
-        if user["email"] == user_data.email:
-            raise HTTPException(status_code=400, detail="Email already registered")
-
-    user_id = str(uuid.uuid4())
-    user = {
-        "id": user_id,
-        "email": user_data.email,
-        "name": user_data.name,
-        "password_hash": hash_password(user_data.password),
-        "created_at": datetime.utcnow().isoformat()
-    }
-    users_db[user_id] = user
-    USER_CREATED.inc()
-
-    logger.info(f"Created user: {user_id}")
-    return User(id=user_id, email=user["email"], name=user["name"], created_at=user["created_at"])
-
-@app.get("/users/{user_id}", response_model=User)
-async def get_user(user_id: str):
+@app.get("/users/{user_id}", response_model=UserResponse)
+def get_user(user_id: str):
     REQUEST_COUNT.labels(method="GET", endpoint="/users/{id}").inc()
+    db = get_db()
+    if not db:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+    try:
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        return user
+    finally:
+        db.close()
 
-    if user_id not in users_db:
-        raise HTTPException(status_code=404, detail="User not found")
+@app.get("/users")
+def list_users():
+    REQUEST_COUNT.labels(method="GET", endpoint="/users").inc()
+    db = get_db()
+    if not db:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+    try:
+        users = db.query(User).limit(100).all()
+        return {"users": [{"id": u.id, "name": u.name, "email": u.email, "phone": u.phone} for u in users]}
+    finally:
+        db.close()
 
-    user = users_db[user_id]
-    return User(id=user["id"], email=user["email"], name=user["name"], created_at=user["created_at"])
-
-@app.put("/users/{user_id}")
-async def update_user(user_id: str, user_data: UserCreate):
-    REQUEST_COUNT.labels(method="PUT", endpoint="/users/{id}").inc()
-
-    if user_id not in users_db:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    users_db[user_id]["email"] = user_data.email
-    users_db[user_id]["name"] = user_data.name
-    if user_data.password:
-        users_db[user_id]["password_hash"] = hash_password(user_data.password)
-
-    return {"message": "User updated", "user_id": user_id}
-
-@app.delete("/users/{user_id}")
-async def delete_user(user_id: str):
+@app.delete("/users/{user_id}", status_code=204)
+def delete_user(user_id: str):
     REQUEST_COUNT.labels(method="DELETE", endpoint="/users/{id}").inc()
-
-    if user_id not in users_db:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    del users_db[user_id]
-    return {"message": "User deleted", "user_id": user_id}
+    db = get_db()
+    if not db:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+    try:
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        db.delete(user)
+        db.commit()
+        return None
+    finally:
+        db.close()
 
 if __name__ == "__main__":
     import uvicorn

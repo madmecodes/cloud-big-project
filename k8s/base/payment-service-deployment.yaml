@@ -37,16 +37,21 @@ spec:
         env:
         - name: PORT
           value: "8004"
-        - name: DATABASE_URL
+        - name: AWS_REGION
           valueFrom:
-            secretKeyRef:
-              name: db-credentials
-              key: url
-        - name: STRIPE_API_KEY
+            configMapKeyRef:
+              name: ecommerce-config
+              key: AWS_REGION
+        - name: PAYMENTS_TABLE
           valueFrom:
-            secretKeyRef:
-              name: stripe-credentials
-              key: api-key
+            configMapKeyRef:
+              name: ecommerce-config
+              key: PAYMENTS_TABLE
+        - name: ORDER_SERVICE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: ecommerce-config
+              key: ORDER_SERVICE_URL
         - name: LOG_LEVEL
           valueFrom:
             configMapKeyRef:
@@ -76,11 +81,7 @@ spec:
             cpu: 800m
             memory: 1Gi
         securityContext:
-          readOnlyRootFilesystem: true
           allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-            - ALL
 
 ---
 apiVersion: v1

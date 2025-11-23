@@ -4,18 +4,21 @@ metadata:
   name: ecommerce-config
   namespace: ecommerce
 data:
-  USER_SERVICE_HOST: "user-service"
-  USER_SERVICE_PORT: "50051"
-  PRODUCT_SERVICE_HOST: "product-service"
-  PRODUCT_SERVICE_PORT: "50052"
-  ORDER_SERVICE_HOST: "order-service"
-  ORDER_SERVICE_PORT: "50053"
-  PAYMENT_SERVICE_HOST: "payment-service"
-  PAYMENT_SERVICE_PORT: "50054"
+  # Service URLs for HTTP communication
+  USER_SERVICE_URL: "http://user-service:8001"
+  PRODUCT_SERVICE_URL: "http://product-service:8001"
+  ORDER_SERVICE_URL: "http://order-service:8003"
+  PAYMENT_SERVICE_URL: "http://payment-service:8004"
+  # DynamoDB Tables
+  ORDERS_TABLE: "ecommerce-orders"
+  PAYMENTS_TABLE: "ecommerce-payments"
+  # AWS Region
+  AWS_REGION: "ap-south-1"
+  # Kafka
   KAFKA_BOOTSTRAP_SERVERS: "msk-kafka-cluster:9092"
   KAFKA_ORDERS_TOPIC: "orders"
   KAFKA_RESULTS_TOPIC: "analytics-results"
+  # General
   LOG_LEVEL: "info"
   ENVIRONMENT: "dev"
-  PROMETHEUS_PORT: "8088"
   METRICS_ENABLED: "true"
