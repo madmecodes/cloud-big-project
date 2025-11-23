@@ -26,7 +26,7 @@ REQUEST_LATENCY = Histogram('http_request_duration_seconds', 'HTTP request laten
 
 # Service URLs from environment
 USER_SERVICE_URL = os.getenv("USER_SERVICE_URL", "http://user-service:8001")
-PRODUCT_SERVICE_URL = os.getenv("PRODUCT_SERVICE_URL", "http://product-service:8002")
+PRODUCT_SERVICE_URL = os.getenv("PRODUCT_SERVICE_URL", "http://product-service:8001")
 ORDER_SERVICE_URL = os.getenv("ORDER_SERVICE_URL", "http://order-service:8003")
 PAYMENT_SERVICE_URL = os.getenv("PAYMENT_SERVICE_URL", "http://payment-service:8004")
 
