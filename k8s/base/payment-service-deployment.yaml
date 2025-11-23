@@ -21,7 +21,8 @@ spec:
         prometheus.io/port: "50054"
         prometheus.io/path: "/metrics"
     spec:
-      containers:
+      imagePullSecrets:
+      - name: ecr-secret      containers:
       - name: payment-service
         image: ecommerce/payment-service:latest
         imagePullPolicy: IfNotPresent

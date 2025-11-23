@@ -37,7 +37,8 @@ spec:
       labels:
         app: grafana
     spec:
-      containers:
+      imagePullSecrets:
+      - name: ecr-secret      containers:
       - name: grafana
         image: grafana/grafana:latest
         ports:

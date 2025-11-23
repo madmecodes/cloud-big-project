@@ -87,7 +87,8 @@ spec:
       labels:
         app: loki
     spec:
-      serviceAccountName: loki
+      imagePullSecrets:
+      - name: ecr-secret      serviceAccountName: loki
       securityContext:
         fsGroup: 10001
         runAsGroup: 10001
@@ -155,7 +156,8 @@ spec:
   - metadata:
       name: loki-storage
     spec:
-      accessModes:
+      imagePullSecrets:
+      - name: ecr-secret      accessModes:
       - ReadWriteOnce
       resources:
         requests:

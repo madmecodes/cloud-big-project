@@ -21,7 +21,8 @@ spec:
         prometheus.io/port: "8080"
         prometheus.io/path: "/metrics"
     spec:
-      containers:
+      imagePullSecrets:
+      - name: ecr-secret      containers:
       - name: api-gateway
         image: ecommerce/api-gateway:latest
         imagePullPolicy: IfNotPresent

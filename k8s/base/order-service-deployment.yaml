@@ -21,7 +21,8 @@ spec:
         prometheus.io/port: "50053"
         prometheus.io/path: "/metrics"
     spec:
-      containers:
+      imagePullSecrets:
+      - name: ecr-secret      containers:
       - name: order-service
         image: ecommerce/order-service:latest
         imagePullPolicy: IfNotPresent

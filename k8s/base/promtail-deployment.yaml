@@ -180,7 +180,8 @@ spec:
       labels:
         app: promtail
     spec:
-      serviceAccountName: promtail
+      imagePullSecrets:
+      - name: ecr-secret      serviceAccountName: promtail
       tolerations:
       - key: node-role.kubernetes.io/master
         effect: NoSchedule

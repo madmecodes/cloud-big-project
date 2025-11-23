@@ -95,7 +95,8 @@ spec:
       labels:
         app: prometheus
     spec:
-      serviceAccountName: prometheus
+      imagePullSecrets:
+      - name: ecr-secret      serviceAccountName: prometheus
       containers:
       - name: prometheus
         image: prom/prometheus:latest
