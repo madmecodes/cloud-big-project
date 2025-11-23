@@ -7,7 +7,7 @@ spec:
   project: default
 
   source:
-    repoURL: https://github.com/your-org/cloud-bigProject
+    repoURL: https://github.com/madmecodes/cloud-big-project
     targetRevision: main
     path: k8s/base
 
@@ -39,7 +39,7 @@ spec:
   project: default
 
   source:
-    repoURL: https://github.com/your-org/cloud-bigProject
+    repoURL: https://github.com/madmecodes/cloud-big-project
     targetRevision: main
     path: observability/prometheus
 

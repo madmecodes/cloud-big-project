@@ -10,13 +10,12 @@ spec:
   project: default
 
   source:
-    repoURL: https://github.com/your-org/cloud-bigProject
+    repoURL: https://github.com/madmecodes/cloud-big-project
     targetRevision: main
     path: k8s/overlays/default
 
     # Use Kustomize to manage overlays
-    plugin:
-      name: kustomize
+    kustomize: {}
 
   destination:
     server: https://kubernetes.default.svc
