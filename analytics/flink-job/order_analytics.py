@@ -87,14 +87,13 @@ def run_analytics():
 
     # Read from Kafka with SSL configuration for AWS MSK
     # AWS MSK uses public certificates from ACM which are trusted by default Java truststore
+    # Using default truststore (no explicit path needed - JVM will find it automatically)
     kafka_df = spark.readStream \
         .format("kafka") \
         .option("kafka.bootstrap.servers", KAFKA_BOOTSTRAP_SERVERS) \
         .option("subscribe", ORDERS_TOPIC) \
         .option("startingOffsets", "latest") \
         .option("kafka.security.protocol", "SSL") \
-        .option("kafka.ssl.truststore.location", "/usr/lib/jvm/java-11-openjdk-amd64/lib/security/cacerts") \
-        .option("kafka.ssl.truststore.password", "changeit") \
         .option("kafka.ssl.endpoint.identification.algorithm", "HTTPS") \
         .load()
 
@@ -158,12 +157,11 @@ def run_analytics():
     print("Writing aggregated results to Kafka...")
 
     # Write to Kafka results topic with SSL configuration for AWS MSK
+    # Using default truststore (no explicit path needed - JVM will find it automatically)
     kafka_query = output_df.writeStream \
         .format("kafka") \
         .option("kafka.bootstrap.servers", KAFKA_BOOTSTRAP_SERVERS) \
         .option("kafka.security.protocol", "SSL") \
-        .option("kafka.ssl.truststore.location", "/usr/lib/jvm/java-11-openjdk-amd64/lib/security/cacerts") \
-        .option("kafka.ssl.truststore.password", "changeit") \
         .option("kafka.ssl.endpoint.identification.algorithm", "HTTPS") \
         .option("topic", RESULTS_TOPIC) \
         .option("checkpointLocation", f"{CHECKPOINT_LOCATION}/kafka") \
