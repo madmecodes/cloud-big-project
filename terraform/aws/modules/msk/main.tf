@@ -59,6 +59,12 @@ resource "aws_msk_cluster" "main" {
     }
   }
 
+  client_authentication {
+    sasl {
+      scram = true
+    }
+  }
+
   logging_info {
     broker_logs {
       cloudwatch_logs {
