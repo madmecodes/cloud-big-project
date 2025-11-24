@@ -23,17 +23,15 @@ Connecting GCP Dataproc (PySpark) to AWS MSK (Managed Streaming for Kafka) with 
 
 ## Correct Spark-Kafka SSL Configuration
 
-### Key Parameters
+### Recommended Configuration (Simple & Reliable)
 ```python
-# Read from Kafka
+# Read from Kafka - Let JVM automatically find default truststore
 kafka_df = spark.readStream \
     .format("kafka") \
     .option("kafka.bootstrap.servers", KAFKA_BOOTSTRAP_SERVERS) \
     .option("subscribe", ORDERS_TOPIC) \
     .option("startingOffsets", "latest") \
     .option("kafka.security.protocol", "SSL") \
-    .option("kafka.ssl.truststore.location", "/usr/lib/jvm/java-11-openjdk-amd64/lib/security/cacerts") \
-    .option("kafka.ssl.truststore.password", "changeit") \
     .option("kafka.ssl.endpoint.identification.algorithm", "HTTPS") \
     .load()
 
@@ -42,13 +40,19 @@ kafka_query = output_df.writeStream \
     .format("kafka") \
     .option("kafka.bootstrap.servers", KAFKA_BOOTSTRAP_SERVERS) \
     .option("kafka.security.protocol", "SSL") \
-    .option("kafka.ssl.truststore.location", "/usr/lib/jvm/java-11-openjdk-amd64/lib/security/cacerts") \
-    .option("kafka.ssl.truststore.password", "changeit") \
     .option("kafka.ssl.endpoint.identification.algorithm", "HTTPS") \
     .option("topic", RESULTS_TOPIC) \
     .option("checkpointLocation", CHECKPOINT_LOCATION) \
     .outputMode("update") \
     .start()
+```
+
+### Alternative Configuration (Explicit Truststore)
+If the simple config doesn't work, explicitly specify the system truststore:
+```python
+# Add these options if default truststore discovery fails
+.option("kafka.ssl.truststore.location", "/usr/lib/jvm/java-11-openjdk-amd64/lib/security/cacerts") \
+.option("kafka.ssl.truststore.password", "changeit") \
 ```
 
 ### Parameter Explanation
