@@ -137,12 +137,17 @@ def publish_order_event(order: dict, event_type: str):
     producer = get_kafka()
     if producer:
         try:
+            # Event schema matching PySpark ORDER_SCHEMA
             event = {
-                "event_type": event_type,
+                "id": order["id"],
                 "order_id": order["id"],
                 "user_id": order["user_id"],
                 "total_amount": order["total_amount"],
-                "timestamp": datetime.utcnow().isoformat()
+                "status": order["status"],
+                "items_count": len(order.get("items", [])),
+                "event_type": event_type,
+                "created_at": order["created_at"],
+                "items": order.get("items", [])
             }
             producer.send(KAFKA_TOPIC, value=event)
             producer.flush()
