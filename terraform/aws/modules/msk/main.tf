@@ -7,14 +7,16 @@ resource "aws_security_group" "msk" {
     from_port   = 9092
     to_port     = 9092
     protocol    = "tcp"
-    cidr_blocks = var.security_group_cidrs
+    cidr_blocks = ["0.0.0.0/0"]  # Allow public access for cross-cloud connectivity
+    description = "Kafka PLAINTEXT from anywhere (for GCP Dataproc)"
   }
 
   ingress {
     from_port   = 9094
     to_port     = 9094
     protocol    = "tcp"
-    cidr_blocks = var.security_group_cidrs
+    cidr_blocks = ["0.0.0.0/0"]  # Allow public access for cross-cloud connectivity
+    description = "Kafka TLS from anywhere"
   }
 
   egress {
@@ -42,11 +44,18 @@ resource "aws_msk_cluster" "main" {
     }
     client_subnets  = var.client_subnets
     security_groups = [aws_security_group.msk.id]
+
+    # NOTE: Public access must be DISABLED during creation, then updated after
+    # connectivity_info {
+    #   public_access {
+    #     type = "SERVICE_PROVIDED_EIPS"
+    #   }
+    # }
   }
 
   encryption_info {
     encryption_in_transit {
-      client_broker = "TLS_PLAINTEXT"
+      client_broker = "TLS"  # Required for public access
       in_cluster    = true
     }
   }

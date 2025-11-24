@@ -1,0 +1,115 @@
+{
+  "dashboard": {
+    "title": "Kubernetes Cluster Health",
+    "tags": ["kubernetes", "cluster"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Cluster CPU Usage",
+        "type": "graph",
+        "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "sum(rate(container_cpu_usage_seconds_total{image!=\"\"}[5m])) by (node)",
+            "legendFormat": "{{node}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "percentunit", "label": "CPU"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Cluster Memory Usage",
+        "type": "graph",
+        "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8},
+        "targets": [
+          {
+            "expr": "sum(container_memory_usage_bytes{image!=\"\"}) by (node) / 1024 / 1024 / 1024",
+            "legendFormat": "{{node}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "gbytes", "label": "Memory"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Pod Status",
+        "type": "stat",
+        "gridPos": {"x": 0, "y": 8, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "count(kube_pod_status_phase{phase=\"Running\"})",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "graphMode": "none",
+          "text": {"titleSize": 20, "valueSize": 50},
+          "colorMode": "value"
+        },
+        "fieldConfig": {
+          "defaults": {"mappings": [], "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": 0}]}}
+        }
+      },
+      {
+        "id": 4,
+        "title": "Pods Failed",
+        "type": "stat",
+        "gridPos": {"x": 6, "y": 8, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "count(kube_pod_status_phase{phase=\"Failed\"})",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "graphMode": "none",
+          "text": {"titleSize": 20, "valueSize": 50},
+          "colorMode": "value"
+        },
+        "fieldConfig": {
+          "defaults": {"mappings": [], "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": 0}, {"color": "red", "value": 1}]}}
+        }
+      },
+      {
+        "id": 5,
+        "title": "Node Count",
+        "type": "stat",
+        "gridPos": {"x": 12, "y": 8, "w": 6, "h": 4},
+        "targets": [
+          {
+            "expr": "count(kube_node_info)",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Namespace Resource Usage",
+        "type": "table",
+        "gridPos": {"x": 0, "y": 12, "w": 24, "h": 8},
+        "targets": [
+          {
+            "expr": "sum(rate(container_cpu_usage_seconds_total{image!=\"\"}[5m])) by (namespace)",
+            "format": "table",
+            "refId": "A"
+          },
+          {
+            "expr": "sum(container_memory_usage_bytes{image!=\"\"}) by (namespace) / 1024 / 1024",
+            "format": "table",
+            "refId": "B"
+          }
+        ]
+      }
+    ],
+    "refresh": "30s",
+    "time": {"from": "now-6h", "to": "now"}
+  }
+}
