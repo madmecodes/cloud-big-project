@@ -14,10 +14,14 @@ data:
   PAYMENTS_TABLE: "ecommerce-payments"
   # AWS Region
   AWS_REGION: "ap-south-1"
-  # Kafka (AWS MSK)
-  KAFKA_BOOTSTRAP_SERVERS: "b-1.ecommercekafka.uvcr6t.c2.kafka.ap-south-1.amazonaws.com:9092,b-2.ecommercekafka.uvcr6t.c2.kafka.ap-south-1.amazonaws.com:9092,b-3.ecommercekafka.uvcr6t.c2.kafka.ap-south-1.amazonaws.com:9092"
+  # Kafka (Confluent Cloud)
+  KAFKA_BOOTSTRAP_SERVERS: "pkc-41p56.asia-south1.gcp.confluent.cloud:9092"
   KAFKA_ORDERS_TOPIC: "orders"
   KAFKA_RESULTS_TOPIC: "analytics-results"
+  KAFKA_SECURITY_PROTOCOL: "SASL_SSL"
+  KAFKA_SASL_MECHANISM: "PLAIN"
+  KAFKA_API_KEY: "I3XN2DJTHYXGK2EN"
+  # API Secret stored in Kubernetes Secret, not in ConfigMap
   # General
   LOG_LEVEL: "info"
   ENVIRONMENT: "dev"

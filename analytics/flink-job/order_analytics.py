@@ -34,8 +34,10 @@ from pyspark.sql.types import (
 # Configuration from environment variables
 KAFKA_BOOTSTRAP_SERVERS = os.getenv(
     "KAFKA_BOOTSTRAP_SERVERS",
-    "b-1.ecommercekafka.13b4qv.c2.kafka.ap-south-1.amazonaws.com:9094,b-2.ecommercekafka.13b4qv.c2.kafka.ap-south-1.amazonaws.com:9094,b-3.ecommercekafka.13b4qv.c2.kafka.ap-south-1.amazonaws.com:9094"
+    "pkc-41p56.asia-south1.gcp.confluent.cloud:9092"
 )
+KAFKA_API_KEY = os.getenv("KAFKA_API_KEY", "I3XN2DJTHYXGK2EN")
+KAFKA_API_SECRET = os.getenv("KAFKA_API_SECRET", "")
 ORDERS_TOPIC = os.getenv("KAFKA_ORDERS_TOPIC", "orders")
 RESULTS_TOPIC = os.getenv("KAFKA_RESULTS_TOPIC", "analytics-results")
 CHECKPOINT_LOCATION = os.getenv("CHECKPOINT_LOCATION", "gs://ecommerce-analytics-checkpoints/order-analytics")
@@ -85,16 +87,15 @@ def run_analytics():
 
     print("Reading from Kafka topic...")
 
-    # Read from Kafka with SSL configuration for AWS MSK
-    # AWS MSK uses public certificates from ACM which are trusted by default Java truststore
-    # Using default truststore (no explicit path needed - JVM will find it automatically)
+    # Read from Kafka with SASL/SSL configuration for Confluent Cloud
     kafka_df = spark.readStream \
         .format("kafka") \
         .option("kafka.bootstrap.servers", KAFKA_BOOTSTRAP_SERVERS) \
         .option("subscribe", ORDERS_TOPIC) \
         .option("startingOffsets", "latest") \
-        .option("kafka.security.protocol", "SSL") \
-        .option("kafka.ssl.endpoint.identification.algorithm", "HTTPS") \
+        .option("kafka.security.protocol", "SASL_SSL") \
+        .option("kafka.sasl.mechanism", "PLAIN") \
+        .option("kafka.sasl.jaas.config", f"org.apache.kafka.common.security.plain.PlainLoginModule required username='{KAFKA_API_KEY}' password='{KAFKA_API_SECRET}';") \
         .load()
 
     # Parse JSON from Kafka value
@@ -156,13 +157,13 @@ def run_analytics():
 
     print("Writing aggregated results to Kafka...")
 
-    # Write to Kafka results topic with SSL configuration for AWS MSK
-    # Using default truststore (no explicit path needed - JVM will find it automatically)
+    # Write to Kafka results topic with SASL/SSL configuration for Confluent Cloud
     kafka_query = output_df.writeStream \
         .format("kafka") \
         .option("kafka.bootstrap.servers", KAFKA_BOOTSTRAP_SERVERS) \
-        .option("kafka.security.protocol", "SSL") \
-        .option("kafka.ssl.endpoint.identification.algorithm", "HTTPS") \
+        .option("kafka.security.protocol", "SASL_SSL") \
+        .option("kafka.sasl.mechanism", "PLAIN") \
+        .option("kafka.sasl.jaas.config", f"org.apache.kafka.common.security.plain.PlainLoginModule required username='{KAFKA_API_KEY}' password='{KAFKA_API_SECRET}';") \
         .option("topic", RESULTS_TOPIC) \
         .option("checkpointLocation", f"{CHECKPOINT_LOCATION}/kafka") \
         .outputMode("update") \
@@ -183,10 +184,16 @@ def run_analytics():
 
 
 if __name__ == "__main__":
+    import sys
+
+    # Accept API secret as command-line argument
+    if len(sys.argv) > 1:
+        globals()['KAFKA_API_SECRET'] = sys.argv[1]
+
     print("\n" + "=" * 60)
     print("Starting E-Commerce Order Analytics Service")
     print("Platform: GCP Dataproc (PySpark Structured Streaming)")
-    print("Source: AWS MSK Kafka")
+    print("Source: Confluent Cloud Kafka")
     print("=" * 60 + "\n")
 
     run_analytics()
