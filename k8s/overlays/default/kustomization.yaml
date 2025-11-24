@@ -12,19 +12,19 @@ namespace: ecommerce
 images:
   - name: ecommerce/api-gateway
     newName: 767828743009.dkr.ecr.ap-south-1.amazonaws.com/ecommerce/api-gateway
-    newTag: 0099a527974ea881f792650507b5a7fed7bb9dd7
+    newTag: bf25b1fca0f238db4155a0943b33b1c7b71e7853
   - name: ecommerce/user-service
     newName: 767828743009.dkr.ecr.ap-south-1.amazonaws.com/ecommerce/user-service
-    newTag: 0099a527974ea881f792650507b5a7fed7bb9dd7
+    newTag: bf25b1fca0f238db4155a0943b33b1c7b71e7853
   - name: ecommerce/product-service
     newName: 767828743009.dkr.ecr.ap-south-1.amazonaws.com/ecommerce/product-service
-    newTag: 0099a527974ea881f792650507b5a7fed7bb9dd7
+    newTag: bf25b1fca0f238db4155a0943b33b1c7b71e7853
   - name: ecommerce/order-service
     newName: 767828743009.dkr.ecr.ap-south-1.amazonaws.com/ecommerce/order-service
-    newTag: 0099a527974ea881f792650507b5a7fed7bb9dd7
+    newTag: bf25b1fca0f238db4155a0943b33b1c7b71e7853
   - name: ecommerce/payment-service
     newName: 767828743009.dkr.ecr.ap-south-1.amazonaws.com/ecommerce/payment-service
-    newTag: 0099a527974ea881f792650507b5a7fed7bb9dd7
+    newTag: bf25b1fca0f238db4155a0943b33b1c7b71e7853
 
 # Replicas configuration
 replicas:
