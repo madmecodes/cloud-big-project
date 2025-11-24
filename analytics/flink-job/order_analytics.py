@@ -157,6 +157,7 @@ def run_analytics():
     kafka_query = output_df.writeStream \
         .format("kafka") \
         .option("kafka.bootstrap.servers", KAFKA_BOOTSTRAP_SERVERS) \
+        .option("kafka.security.protocol", "SSL") \
         .option("topic", RESULTS_TOPIC) \
         .option("checkpointLocation", f"{CHECKPOINT_LOCATION}/kafka") \
         .outputMode("update") \
