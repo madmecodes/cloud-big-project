@@ -1,0 +1,26 @@
+meta {
+  name: Create Product
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/api/v1/products
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "Gaming Laptop",
+    "description": "High performance gaming laptop",
+    "price": 1500.00,
+    "stock": 100,
+    "category": "electronics",
+    "sku": "LAPTOP-001"
+  }
+}

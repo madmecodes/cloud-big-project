@@ -1,0 +1,25 @@
+meta {
+  name: Refund Payment
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/api/v1/payments/:payment_id/refund
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+params:path {
+  payment_id: {{payment_id}}
+}
+
+body:json {
+  {
+    "reason": "Customer requested refund"
+  }
+}

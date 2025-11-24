@@ -1,0 +1,29 @@
+meta {
+  name: Reserve Stock (Order -> Product)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{product_service_url}}/api/v1/products/:product_id/reserve
+  body: none
+  auth: none
+}
+
+params:path {
+  product_id: {{product_id}}
+}
+
+params:query {
+  quantity: 1
+}
+
+docs {
+  Internal API called by Order Service to reserve product stock.
+
+  Called when: Creating a new order
+  Caller: Order Service
+  Target: Product Service
+
+  Returns 200 if stock reserved successfully.
+}

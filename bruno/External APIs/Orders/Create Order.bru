@@ -1,0 +1,45 @@
+meta {
+  name: Create Order
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/api/v1/orders
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "user_id": "{{user_id}}",
+    "shipping_address": {
+      "street": "123 Main Street",
+      "city": "Mumbai",
+      "state": "Maharashtra",
+      "zip": "400001",
+      "country": "India"
+    },
+    "items": [
+      {
+        "product_id": "{{product_id}}",
+        "quantity": 2,
+        "price": 1500.00
+      }
+    ]
+  }
+}
+
+docs {
+  Creates a new order.
+
+  This internally:
+  1. Validates user exists (HTTP call to User Service)
+  2. Reserves product stock (HTTP call to Product Service)
+  3. Saves order to DynamoDB
+  4. Publishes order event to Kafka
+}

@@ -1,0 +1,25 @@
+meta {
+  name: Validate User (Order -> User)
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{user_service_url}}/users/:user_id
+  body: none
+  auth: none
+}
+
+params:path {
+  user_id: {{user_id}}
+}
+
+docs {
+  Internal API called by Order Service to validate user exists.
+
+  Called when: Creating a new order
+  Caller: Order Service
+  Target: User Service
+
+  Returns 200 if user exists, 404 if not found.
+}

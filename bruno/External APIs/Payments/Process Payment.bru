@@ -1,0 +1,33 @@
+meta {
+  name: Process Payment
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/api/v1/payments
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "order_id": "{{order_id}}",
+    "user_id": "{{user_id}}",
+    "amount": 3000.00,
+    "currency": "INR",
+    "payment_method": "credit_card"
+  }
+}
+
+docs {
+  Process a payment for an order.
+
+  This internally:
+  1. Saves payment to DynamoDB
+  2. Callbacks to Order Service to update status to "paid"
+}

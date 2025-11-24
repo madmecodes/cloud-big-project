@@ -1,0 +1,32 @@
+meta {
+  name: Update Order Status (Payment -> Order)
+  type: http
+  seq: 1
+}
+
+put {
+  url: {{order_service_url}}/api/v1/orders/:order_id/status
+  body: none
+  auth: none
+}
+
+params:path {
+  order_id: {{order_id}}
+}
+
+params:query {
+  status: paid
+}
+
+docs {
+  Internal API callback from Payment Service to Order Service.
+
+  Called when: Payment is processed successfully
+  Caller: Payment Service
+  Target: Order Service
+
+  Updates order status to:
+  - "paid" when payment succeeds
+  - "payment_failed" when payment fails
+  - "refunded" when refund is processed
+}
