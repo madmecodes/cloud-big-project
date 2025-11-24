@@ -1,197 +1,100 @@
-# Cloud E-Commerce Microservices Platform
+# E-Commerce Microservices Platform - Complete Cloud-Native Implementation
 
-A production-grade cloud-native e-commerce platform demonstrating advanced cloud architecture patterns using AWS and GCP.
+## Assignment Overview
+This project implements a **comprehensive cloud-native e-commerce platform** demonstrating enterprise-grade microservices architecture across multiple cloud providers with advanced DevOps practices.
 
-## Architecture Diagram
+**Assignment Document**: [Link to Assignment PDF](./assignment.pdf)
 
-```
-                                    External Users
-                                          |
-                                          v
-                              +-------------------+
-                              |   AWS ALB (L7)    |
-                              +-------------------+
-                                          |
-                                          v
-+---------------------------------------------------------------------------------+
-|                              AWS EKS Cluster                                     |
-|  +---------------+                                                               |
-|  | API Gateway   |-----> Routes to all internal services                         |
-|  | (Python/8080) |                                                               |
-|  +---------------+                                                               |
-|         |                                                                        |
-|         +----------------+----------------+----------------+                     |
-|         |                |                |                |                     |
-|         v                v                v                v                     |
-|  +-------------+  +-------------+  +-------------+  +---------------+            |
-|  |User Service |  |Product Svc  |  |Order Service|  |Payment Service|            |
-|  |(Python/8001)|  |(Python/8001)|  |(Python/8003)|  |(Python/8004)  |            |
-|  +-------------+  +-------------+  +-------------+  +---------------+            |
-|         |                |                |                |                     |
-|         v                v                |                |                     |
-|  +-------------+  +-------------+         |                |                     |
-|  |  RDS        |  |  RDS        |         |                |                     |
-|  | PostgreSQL  |  | PostgreSQL  |         v                v                     |
-|  +-------------+  +-------------+  +-------------+  +-------------+              |
-|                                    |  DynamoDB   |  |  DynamoDB   |              |
-|                                    |   orders    |  |  payments   |              |
-|                                    +-------------+  +-------------+              |
-+---------------------------------------------------------------------------------+
+---
 
-Inter-Service Communication (HTTP REST):
-  - Order Service --> User Service (validate user)
-  - Order Service --> Product Service (reserve stock)
-  - Payment Service --> Order Service (update order status callback)
+## 📋 Deliverables & Documentation
 
-Event Streaming:
-  +-------------+        +-------------+        +------------------+
-  |Order Service| -----> |  AWS MSK    | -----> | GCP Dataproc     |
-  |   (Kafka)   |        |   Kafka     |        | (Apache Flink)   |
-  +-------------+        +-------------+        +------------------+
-                               |
-                               v
-                        +-------------+
-                        | AWS Lambda  |
-                        | (Notifier)  |
-                        +-------------+
-```
+### Quick Navigation
+Each point below represents a specific requirement with comprehensive documentation:
 
-## Microservices Architecture
+| Point | Requirement | Documentation | Status |
+|-------|-------------|---|---|
+| **PointA** | Infrastructure as Code (Terraform) | [PointA.md](./PointA.md) | ✅ Complete |
+| **PointB** | Microservices Architecture (6+ services) | [PointB.md](./PointB.md) | ✅ Complete |
+| **PointC** | Managed Kubernetes with HPA Scaling | [PointC.md](./PointC.md) | ✅ Complete |
+| **PointD** | GitOps & CI/CD Pipeline (ArgoCD) | [PointD.md](./PointD.md) | ✅ Complete |
+| **PointE** | Real-Time Stream Processing (Spark) | [PointE.md](./PointE.md) | ✅ Complete |
+| **PointF** | Multi-Cloud Storage (RDS + DynamoDB + S3) | [PointF.md](./PointF.md) | ✅ Complete |
+| **PointG** | Observability Stack (Prometheus + Loki + Grafana) | [PointG.md](./PointG.md) | ✅ Complete |
+| **PointH** | Load Testing & HPA Validation (K6) | [PointH.md](./PointH.md) | ✅ Complete |
 
-| Service | Language | Port | Database | Description |
-|---------|----------|------|----------|-------------|
-| API Gateway | Python/FastAPI | 8080 | - | Public REST API entry point, routes to internal services |
-| User Service | Python/FastAPI | 8001 | PostgreSQL (RDS) | User management and authentication |
-| Product Service | Python/FastAPI | 8001 | PostgreSQL (RDS) | Product catalog, inventory management |
-| Order Service | Python/FastAPI | 8003 | DynamoDB | Order processing, validates users, reserves stock |
-| Payment Service | Python/FastAPI | 8004 | DynamoDB | Payment transactions, updates order status |
-| Notification Lambda | Python | - | - | Serverless email/SMS notifications |
-| Analytics (Flink) | Python | - | GCS | Real-time order analytics on GCP Dataproc |
+---
 
-## Database Architecture
+## 🎯 What's Implemented
 
-```
-+-------------------+     +-------------------+
-|   PostgreSQL      |     |     DynamoDB      |
-|   (AWS RDS)       |     |                   |
-+-------------------+     +-------------------+
-| - users           |     | - ecommerce-orders|
-| - products        |     | - ecommerce-payments|
-| - sessions        |     | - ecommerce-carts |
-+-------------------+     | - ecommerce-sessions|
-                          +-------------------+
-```
+### Infrastructure (PointA)
+- **Terraform** manages all cloud infrastructure
+- AWS EKS cluster (3 nodes, auto-scaling enabled)
+- RDS PostgreSQL database
+- DynamoDB tables (5 tables for orders, payments, sessions, carts, notifications)
+- S3 buckets (product images, order documents, analytics results)
+- SQS queues, IAM roles, VPC, security groups
 
-## Inter-Service Communication
+### Microservices (PointB)
+**7 Services, 6+ distinct purposes**:
+1. **API Gateway** - Request routing (AWS ELB)
+2. **User Service** - User management (FastAPI)
+3. **Product Service** - Catalog & inventory (FastAPI)
+4. **Order Service** - Order processing (FastAPI, Kafka + SQS publishing)
+5. **Payment Service** - Payment handling (FastAPI)
+6. **Notification Service** - Async event processing (AWS Lambda)
+7. **Data Analytics Service** - Real-time metrics (GCP Dataproc + Spark)
 
-### HTTP REST Communication Flow
+**Multi-Cloud**: AWS (primary) + GCP (analytics)
+**Serverless**: AWS Lambda for notifications
 
-```
-1. Create Order Flow:
-   Client --> API Gateway --> Order Service
-                                   |
-                                   +--> User Service (GET /users/{id}) - Validate user exists
-                                   |
-                                   +--> Product Service (POST /products/{id}/reserve) - Reserve stock
-                                   |
-                                   +--> DynamoDB (PutItem) - Save order
-                                   |
-                                   +--> Kafka (publish) - Order event
+### Kubernetes & Auto-Scaling (PointC)
+- **Managed K8s**: AWS EKS in ap-south-1
+- **Stateless Services**: All 5 microservices are Deployments (horizontally scalable)
+- **HPA (Horizontal Pod Autoscaler)**:
+  - Order Service: 2-10 pods (15% CPU, 30% memory thresholds)
+  - Payment Service: 2-8 pods (15% CPU, 30% memory thresholds)
+- **Metrics Server**: Collecting real-time pod metrics
+- **Load Balancing**: ClusterIP services with automatic traffic distribution
 
-2. Process Payment Flow:
-   Client --> API Gateway --> Payment Service
-                                   |
-                                   +--> DynamoDB (PutItem) - Save payment
-                                   |
-                                   +--> Order Service (PUT /orders/{id}/status) - Update to "paid"
-```
+### GitOps & CI/CD (PointD)
+- **GitHub Actions** (CI): Detects code changes → Builds Docker images → Pushes to ECR → Updates manifests
+- **ArgoCD** (CD/GitOps): Monitors Git repo → Syncs manifests to EKS cluster
+- **No Direct kubectl**: All deployments via Git commits
+- **Automated**: Code push → CI builds → Manifests update → CD deploys (fully automated pipeline)
 
-## Cloud Providers
+### Stream Processing (PointE)
+- **Apache Spark Streaming** on GCP Dataproc
+- **Consumes**: Kafka topic "orders" (from Order Service)
+- **Processes**: Stateful 1-minute tumbling windows with unique user count aggregation
+- **Publishes**: Results to "analytics-results" Kafka topic
+- **Also stores**: Results to S3 and BigQuery
+- **Different Cloud**: GCP (vs AWS primary)
 
-### AWS (Primary)
-- **EKS**: Managed Kubernetes for microservices
-- **RDS PostgreSQL**: Relational data (users, products)
-- **DynamoDB**: NoSQL data (orders, payments, sessions, carts)
-- **MSK**: Managed Kafka for event streaming
-- **Lambda**: Serverless notifications
-- **S3**: Object storage (product images, documents)
-- **ALB**: Application Load Balancer
+### Storage Architecture (PointF)
+**3 Distinct Cloud Storage Products**:
+1. **RDS PostgreSQL** (SQL) - Users, Products, Metadata
+2. **DynamoDB** (NoSQL) - Orders, Payments, Sessions, Carts, Notifications (high-throughput)
+3. **S3** (Object Store) - Product images, Order docs, Analytics results
+- **Integrated**: Each microservice uses optimal storage for its data type
+- **Triggered**: Different storage systems triggered by different events in the order pipeline
 
-### GCP (Analytics)
-- **Dataproc**: Apache Flink for real-time analytics
-- **Cloud Storage**: Analytics results storage
+### Observability (PointG)
+- **Prometheus**: Scrapes metrics from all services (15-day retention)
+- **Loki**: Aggregates logs from all pods via Promtail (7-day retention)
+- **Grafana**: 2 production dashboards
+  - Dashboard 1: Kubernetes & service metrics (RPS, error rate, latency, cluster health)
+  - Dashboard 2: Microservice logs (per-service log streams)
+- **Coverage**: All 5 microservices + Lambda + Dataproc job
 
-## Project Structure
+### Load Testing & Validation (PointH)
+- **K6 Load Testing**: Simple, concise test script (4.5 min duration)
+- **Test Execution**: 0→25 virtual users generating sustained load
+- **Results**:
+  - 661 successful requests (0% error rate)
+  - Order Service scaled 2→4 pods automatically
+  - Response time: 264ms average (p95=584ms)
+  - HPA scaling confirmed working perfectly
+- **Tool**: `load-tests/k6/order-service-load-test.js` with README
 
-```
-cloud-bigProject/
-├── terraform/                 # Infrastructure as Code
-│   ├── aws/                   # AWS infrastructure
-│   │   └── modules/           # VPC, EKS, RDS, DynamoDB, S3, MSK, Lambda, ALB
-│   └── gcp/                   # GCP infrastructure
-│       └── modules/           # Dataproc, Cloud Storage
-├── services/                  # Microservices
-│   ├── api-gateway/           # Python FastAPI Gateway
-│   ├── user-service/          # Python FastAPI User Service
-│   ├── product-service/       # Python FastAPI Product Service
-│   ├── order-service/         # Python FastAPI Order Service
-│   ├── payment-service/       # Python FastAPI Payment Service
-│   └── notification-lambda/   # Python Lambda Notification
-├── analytics/
-│   └── flink-job/             # Python Flink Analytics Job
-├── k8s/                       # Kubernetes & GitOps
-│   ├── base/                  # Base manifests
-│   ├── overlays/              # Environment-specific (dev/prod)
-│   └── argocd/                # ArgoCD configuration
-├── bruno/                     # API Collection (Bruno)
-│   ├── External APIs/         # Public-facing APIs
-│   └── Internal APIs/         # Service-to-service APIs
-├── observability/             # Monitoring & Logging
-├── load-tests/                # k6 load testing
-└── docs/                      # Documentation
-```
-
-## Getting Started
-
-### Prerequisites
-- AWS Account with credentials configured
-- GCP Project with credentials configured
-- Docker installed
-- Terraform >= 1.0
-- kubectl installed
-
-### Deploy Infrastructure
-```bash
-cd terraform/aws && terraform init && terraform apply
-cd ../gcp && terraform init && terraform apply
-```
-
-### Deploy Microservices
-```bash
-# ArgoCD automatically syncs from Git
-kubectl get pods -n ecommerce
-```
-
-## API Documentation
-
-See `bruno/` directory for complete API collection.
-
-## Scaling & Performance
-
-| Service | Min Replicas | Max Replicas | Scaling Metric |
-|---------|-------------|--------------|----------------|
-| API Gateway | 2 | 5 | Manual |
-| User Service | 2 | 4 | Manual |
-| Product Service | 2 | 8 | Memory (80%) |
-| Order Service | 2 | 10 | CPU (70%) |
-| Payment Service | 2 | 8 | CPU (70%) |
-
-## Monitoring
-
-- **Prometheus**: Metrics collection (scrapes every 15s)
-- **Grafana**: Visualization dashboards
-- **Loki**: Log aggregation
-
-## License
-
-MIT
+---
