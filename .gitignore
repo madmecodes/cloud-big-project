@@ -91,3 +91,9 @@ tmp/
 credentials.json
 serviceAccountKey.json
 aws-credentials.json
+
+# Terraform plan files
+*.tfplan
+
+# Terraform observability placeholder directories
+terraform/aws/observability/
