@@ -10,8 +10,6 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 # AWS clients
-sns_client = boto3.client('sns')
-ses_client = boto3.client('ses')
 dynamodb = boto3.resource('dynamodb')
 
 # Environment variables
@@ -119,9 +117,10 @@ def handle_kafka_event(event: Dict[str, Any]) -> Dict[str, Any]:
 
 def process_order_event(event: Dict[str, Any]) -> bool:
     """
-    Process an order event and send appropriate notifications.
+    Process an order event asynchronously.
+    Logs event and stores notification record in DynamoDB.
 
-    Returns True if notification was sent successfully.
+    Returns True if notification was stored successfully.
     """
     order_id = event.get('order_id')
     user_id = event.get('user_id')
@@ -133,195 +132,39 @@ def process_order_event(event: Dict[str, Any]) -> bool:
         logger.warning("Missing required fields in event")
         return False
 
-    # Determine notification type based on event
+    # Create notification record
     notification_data = {
         'order_id': order_id,
         'user_id': user_id,
         'event_type': event_type,
         'timestamp': datetime.now().isoformat(),
-        'sent': False
+        'total_amount': total_amount,
+        'items_count': items_count,
+        'status': 'processed'
     }
 
     try:
-        # Get user details (in real scenario, call user service)
-        user_email = get_user_email(user_id)
-        user_phone = get_user_phone(user_id)
+        # Log the event (asynchronous task)
+        logger.info(f"Processing order event: {event_type} | Order: {order_id} | User: {user_id} | Amount: ${total_amount}")
 
-        # Send notifications based on event type
-        if event_type == 'order.created':
-            send_order_confirmation(user_email, order_id, total_amount, items_count)
-            notification_data['notification_type'] = 'order_confirmation'
-
-        elif event_type == 'order.shipped':
-            send_shipment_notification(user_email, order_id)
-            notification_data['notification_type'] = 'shipment_notification'
-
-        elif event_type == 'order.delivered':
-            send_delivery_notification(user_email, order_id)
-            notification_data['notification_type'] = 'delivery_notification'
-
-        elif event_type == 'order.cancelled':
-            send_cancellation_notification(user_email, order_id)
-            notification_data['notification_type'] = 'cancellation_notification'
-
-        elif event_type == 'payment.failed':
-            send_payment_failure_notification(user_email, order_id)
-            notification_data['notification_type'] = 'payment_failure'
-
-        notification_data['sent'] = True
-
-        # Store notification record
+        # Store notification record in DynamoDB
         store_notification(notification_data)
 
-        # Publish to SNS for additional processing
-        publish_to_sns(notification_data)
-
-        logger.info(f"Successfully processed event: {event_type} for order {order_id}")
+        logger.info(f"Successfully stored notification for order {order_id}")
         return True
 
     except Exception as e:
         logger.error(f"Error processing order event: {str(e)}")
+        notification_data['status'] = 'failed'
         notification_data['error'] = str(e)
-        store_notification(notification_data)
+        try:
+            store_notification(notification_data)
+        except Exception as store_error:
+            logger.error(f"Failed to store error notification: {str(store_error)}")
         return False
 
 
-def send_order_confirmation(email: str, order_id: str, total_amount: float, items_count: int) -> None:
-    """Send order confirmation email."""
-    subject = f"Order Confirmation - {order_id}"
-    body = f"""
-    Dear Customer,
-
-    Thank you for your order!
-
-    Order ID: {order_id}
-    Total Amount: ${total_amount:.2f}
-    Items: {items_count}
-
-    Your order will be shipped soon.
-
-    Best regards,
-    E-Commerce Team
-    """
-
-    send_email(email, subject, body)
-    logger.info(f"Order confirmation sent to {email} for order {order_id}")
-
-
-def send_shipment_notification(email: str, order_id: str) -> None:
-    """Send shipment notification."""
-    subject = f"Your Order {order_id} Has Been Shipped!"
-    body = f"""
-    Dear Customer,
-
-    Your order {order_id} has been shipped!
-
-    You can track your shipment using the link below:
-    [Tracking Link]
-
-    Best regards,
-    E-Commerce Team
-    """
-
-    send_email(email, subject, body)
-    logger.info(f"Shipment notification sent to {email} for order {order_id}")
-
-
-def send_delivery_notification(email: str, order_id: str) -> None:
-    """Send delivery notification."""
-    subject = f"Your Order {order_id} Has Been Delivered!"
-    body = f"""
-    Dear Customer,
-
-    Your order {order_id} has been delivered!
-
-    We hope you are satisfied with your purchase.
-    Please rate your experience: [Rating Link]
-
-    Best regards,
-    E-Commerce Team
-    """
-
-    send_email(email, subject, body)
-    logger.info(f"Delivery notification sent to {email} for order {order_id}")
-
-
-def send_cancellation_notification(email: str, order_id: str) -> None:
-    """Send order cancellation notification."""
-    subject = f"Order {order_id} Cancelled"
-    body = f"""
-    Dear Customer,
-
-    Your order {order_id} has been cancelled as requested.
-
-    If you have any questions, please contact our support team.
-
-    Best regards,
-    E-Commerce Team
-    """
-
-    send_email(email, subject, body)
-    logger.info(f"Cancellation notification sent to {email} for order {order_id}")
-
-
-def send_payment_failure_notification(email: str, order_id: str) -> None:
-    """Send payment failure notification."""
-    subject = f"Payment Failed for Order {order_id}"
-    body = f"""
-    Dear Customer,
-
-    We were unable to process the payment for your order {order_id}.
-
-    Please try again: [Retry Payment Link]
-
-    Best regards,
-    E-Commerce Team
-    """
-
-    send_email(email, subject, body)
-    logger.info(f"Payment failure notification sent to {email} for order {order_id}")
-
-
-def send_email(to_email: str, subject: str, body: str) -> None:
-    """Send email using SES."""
-    try:
-        response = ses_client.send_email(
-            Source=SES_SENDER_EMAIL,
-            Destination={
-                'ToAddresses': [to_email]
-            },
-            Message={
-                'Subject': {
-                    'Data': subject,
-                    'Charset': 'UTF-8'
-                },
-                'Body': {
-                    'Text': {
-                        'Data': body,
-                        'Charset': 'UTF-8'
-                    }
-                }
-            }
-        )
-        logger.info(f"Email sent successfully to {to_email}. MessageId: {response['MessageId']}")
-
-    except Exception as e:
-        logger.error(f"Failed to send email to {to_email}: {str(e)}")
-        raise
-
-
-def publish_to_sns(notification_data: Dict[str, Any]) -> None:
-    """Publish notification to SNS topic."""
-    try:
-        if SNS_TOPIC_ARN:
-            sns_client.publish(
-                TopicArn=SNS_TOPIC_ARN,
-                Subject=f"Notification: {notification_data.get('notification_type', 'Unknown')}",
-                Message=json.dumps(notification_data)
-            )
-            logger.info(f"Published to SNS: {notification_data['order_id']}")
-    except Exception as e:
-        logger.error(f"Failed to publish to SNS: {str(e)}")
+# Email sending removed - using async logging and DynamoDB storage instead
 
 
 def store_notification(notification_data: Dict[str, Any]) -> None:
@@ -334,15 +177,4 @@ def store_notification(notification_data: Dict[str, Any]) -> None:
         logger.error(f"Failed to store notification: {str(e)}")
 
 
-def get_user_email(user_id: str) -> str:
-    """Get user email address. In production, call user service."""
-    # TODO: Call User Service gRPC to get user details
-    # For now, return mock email
-    return f"user_{user_id}@example.com"
-
-
-def get_user_phone(user_id: str) -> str:
-    """Get user phone number. In production, call user service."""
-    # TODO: Call User Service gRPC to get user details
-    # For now, return empty string
-    return ""
+# Helper functions removed - using simplified event logging approach

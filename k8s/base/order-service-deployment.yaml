@@ -84,6 +84,12 @@ spec:
             secretKeyRef:
               name: kafka-confluent-secret
               key: api-secret
+        - name: SQS_QUEUE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: ecommerce-config
+              key: SQS_QUEUE_URL
+              optional: true
         livenessProbe:
           httpGet:
             path: /health

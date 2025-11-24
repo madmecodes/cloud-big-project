@@ -27,6 +27,8 @@ KAFKA_SECURITY_PROTOCOL = os.getenv("KAFKA_SECURITY_PROTOCOL", "PLAINTEXT")
 KAFKA_SASL_MECHANISM = os.getenv("KAFKA_SASL_MECHANISM", "PLAIN")
 KAFKA_API_KEY = os.getenv("KAFKA_API_KEY", "")
 KAFKA_API_SECRET = os.getenv("KAFKA_API_SECRET", "")
+# SQS for Lambda notifications
+SQS_QUEUE_URL = os.getenv("SQS_QUEUE_URL", "")
 
 # DynamoDB
 dynamodb = None
@@ -69,6 +71,50 @@ def get_kafka():
         except Exception as e:
             logger.warning(f"Kafka connection failed: {e}")
     return kafka_producer
+
+# SQS for Lambda notifications
+sqs_client = None
+def get_sqs():
+    global sqs_client
+    if sqs_client is None:
+        try:
+            sqs_client = boto3.client('sqs', region_name=AWS_REGION)
+            logger.info(f"SQS client initialized for region: {AWS_REGION}")
+        except Exception as e:
+            logger.warning(f"SQS initialization failed: {e}")
+    return sqs_client
+
+def publish_to_sqs(order: dict):
+    """Publish order event to SQS for Lambda notification processing."""
+    if not SQS_QUEUE_URL:
+        logger.debug("SQS_QUEUE_URL not set, skipping SQS publish")
+        return
+
+    client = get_sqs()
+    if not client:
+        logger.warning("SQS client not available")
+        return
+
+    try:
+        # Create SQS message
+        message = {
+            "order_id": order["id"],
+            "user_id": order["user_id"],
+            "total_amount": order["total_amount"],
+            "status": order["status"],
+            "items_count": len(order.get("items", [])),
+            "event_type": "order.created",
+            "created_at": order["created_at"]
+        }
+
+        # Send to SQS
+        response = client.send_message(
+            QueueUrl=SQS_QUEUE_URL,
+            MessageBody=json.dumps(message)
+        )
+        logger.info(f"Order event published to SQS: {order['id']} (MessageId: {response['MessageId']})")
+    except Exception as e:
+        logger.error(f"Failed to publish to SQS: {e}")
 
 # Pydantic Models
 class OrderItem(BaseModel):
@@ -195,8 +241,12 @@ def create_order(order_data: OrderCreate):
         except Exception as e:
             logger.error(f"DynamoDB save failed: {e}")
 
-    # Publish event to Kafka
+    # Publish event to Kafka (for Dataproc analytics)
     publish_order_event(order, "order.created")
+
+    # Publish to SQS for Lambda notification processing (asynchronous)
+    publish_to_sqs(order)
+
     ORDERS_CREATED.inc()
 
     return OrderResponse(**order)
