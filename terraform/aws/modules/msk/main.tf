@@ -45,12 +45,11 @@ resource "aws_msk_cluster" "main" {
     client_subnets  = var.client_subnets
     security_groups = [aws_security_group.msk.id]
 
-    # NOTE: Public access must be DISABLED during creation, then updated after
-    # connectivity_info {
-    #   public_access {
-    #     type = "SERVICE_PROVIDED_EIPS"
-    #   }
-    # }
+    connectivity_info {
+      public_access {
+        type = "SERVICE_PROVIDED_EIPS"
+      }
+    }
   }
 
   encryption_info {
