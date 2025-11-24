@@ -1,0 +1,217 @@
+{
+  "dashboard": {
+    "title": "E-Commerce Kubernetes Monitoring",
+    "uid": "ecommerce-k8s-v2",
+    "tags": ["kubernetes", "prometheus"],
+    "timezone": "browser",
+    "schemaVersion": 16,
+    "version": 0,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Request Rate Per Second",
+        "type": "graph",
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "sum(rate(http_requests_total[2m])) by (instance)",
+            "legendFormat": "{{instance}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "Running Pods by Namespace",
+        "type": "graph",
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "sum(kube_pod_status_phase{phase=\"Running\"}) by (namespace)",
+            "legendFormat": "{{namespace}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "HTTP Error Rate (5xx)",
+        "type": "graph",
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "sum(rate(http_requests_total{status=~\"5..\"}[2m])) by (instance)",
+            "legendFormat": "{{instance}} errors"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+      },
+      {
+        "id": 4,
+        "title": "Request Latency p95",
+        "type": "graph",
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[2m])) by (instance, le))",
+            "legendFormat": "p95 {{instance}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+      },
+      {
+        "id": 5,
+        "title": "Kubernetes Nodes Ready",
+        "type": "stat",
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "sum(kube_node_status_condition{condition=\"Ready\",status=\"true\"})"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 16}
+      },
+      {
+        "id": 6,
+        "title": "Total Pods Running",
+        "type": "stat",
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "sum(kube_pod_status_phase{phase=\"Running\"})"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 6, "x": 6, "y": 16}
+      },
+      {
+        "id": 7,
+        "title": "Orders Created (Total)",
+        "type": "stat",
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "sum(orders_created_total)"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 6, "x": 12, "y": 16}
+      },
+      {
+        "id": 8,
+        "title": "Active Prometheus Targets",
+        "type": "stat",
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "count(up == 1)"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 6, "x": 18, "y": 16}
+      },
+      {
+        "id": 9,
+        "title": "Pod CPU Resource Requests (Top 15)",
+        "type": "table",
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "topk(15, sum(kube_pod_container_resource_requests{resource=\"cpu\",unit=\"core\"}) by (namespace, pod))",
+            "format": "table",
+            "instant": true
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {
+                "Time": true
+              },
+              "indexByName": {
+                "namespace": 0,
+                "pod": 1,
+                "Value": 2
+              },
+              "renameByName": {
+                "namespace": "Namespace",
+                "pod": "Pod Name",
+                "Value": "CPU Request (cores)"
+              }
+            }
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 20}
+      },
+      {
+        "id": 10,
+        "title": "Pod Memory Resource Requests (Top 15)",
+        "type": "table",
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "topk(15, sum(kube_pod_container_resource_requests{resource=\"memory\",unit=\"byte\"}) by (namespace, pod) / 1024 / 1024)",
+            "format": "table",
+            "instant": true
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {
+                "Time": true
+              },
+              "indexByName": {
+                "namespace": 0,
+                "pod": 1,
+                "Value": 2
+              },
+              "renameByName": {
+                "namespace": "Namespace",
+                "pod": "Pod Name",
+                "Value": "Memory Request (MB)"
+              }
+            }
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 20}
+      },
+      {
+        "id": 11,
+        "title": "Pod Restarts (Top 15)",
+        "type": "table",
+        "datasource": "Prometheus",
+        "targets": [
+          {
+            "expr": "topk(15, sum(kube_pod_container_status_restarts_total) by (namespace, pod))",
+            "format": "table",
+            "instant": true
+          }
+        ],
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {
+                "Time": true
+              },
+              "indexByName": {
+                "namespace": 0,
+                "pod": 1,
+                "Value": 2
+              },
+              "renameByName": {
+                "namespace": "Namespace",
+                "pod": "Pod Name",
+                "Value": "Restart Count"
+              }
+            }
+          }
+        ],
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 28}
+      }
+    ]
+  },
+  "folderId": 0,
+  "overwrite": true
+}

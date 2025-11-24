@@ -14,8 +14,8 @@ data:
   PAYMENTS_TABLE: "ecommerce-payments"
   # AWS Region
   AWS_REGION: "ap-south-1"
-  # Kafka
-  KAFKA_BOOTSTRAP_SERVERS: "msk-kafka-cluster:9092"
+  # Kafka (AWS MSK)
+  KAFKA_BOOTSTRAP_SERVERS: "b-1.ecommercekafka.uvcr6t.c2.kafka.ap-south-1.amazonaws.com:9092,b-2.ecommercekafka.uvcr6t.c2.kafka.ap-south-1.amazonaws.com:9092,b-3.ecommercekafka.uvcr6t.c2.kafka.ap-south-1.amazonaws.com:9092"
   KAFKA_ORDERS_TOPIC: "orders"
   KAFKA_RESULTS_TOPIC: "analytics-results"
   # General
