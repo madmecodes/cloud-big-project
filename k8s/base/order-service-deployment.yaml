@@ -64,6 +64,26 @@ spec:
             configMapKeyRef:
               name: ecommerce-config
               key: KAFKA_ORDERS_TOPIC
+        - name: KAFKA_SECURITY_PROTOCOL
+          valueFrom:
+            configMapKeyRef:
+              name: ecommerce-config
+              key: KAFKA_SECURITY_PROTOCOL
+        - name: KAFKA_SASL_MECHANISM
+          valueFrom:
+            configMapKeyRef:
+              name: ecommerce-config
+              key: KAFKA_SASL_MECHANISM
+        - name: KAFKA_API_KEY
+          valueFrom:
+            configMapKeyRef:
+              name: ecommerce-config
+              key: KAFKA_API_KEY
+        - name: KAFKA_API_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: kafka-confluent-secret
+              key: api-secret
         livenessProbe:
           httpGet:
             path: /health

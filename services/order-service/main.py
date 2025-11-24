@@ -23,6 +23,10 @@ USER_SERVICE_URL = os.getenv("USER_SERVICE_URL", "http://user-service:8001")
 PRODUCT_SERVICE_URL = os.getenv("PRODUCT_SERVICE_URL", "http://product-service:8001")
 KAFKA_BOOTSTRAP_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
 KAFKA_TOPIC = os.getenv("KAFKA_ORDERS_TOPIC", "orders")
+KAFKA_SECURITY_PROTOCOL = os.getenv("KAFKA_SECURITY_PROTOCOL", "PLAINTEXT")
+KAFKA_SASL_MECHANISM = os.getenv("KAFKA_SASL_MECHANISM", "PLAIN")
+KAFKA_API_KEY = os.getenv("KAFKA_API_KEY", "")
+KAFKA_API_SECRET = os.getenv("KAFKA_API_SECRET", "")
 
 # DynamoDB
 dynamodb = None
@@ -48,11 +52,20 @@ def get_kafka():
     global kafka_producer
     if kafka_producer is None:
         try:
-            kafka_producer = KafkaProducer(
-                bootstrap_servers=KAFKA_BOOTSTRAP_SERVERS.split(","),
-                value_serializer=lambda v: json.dumps(v).encode('utf-8')
-            )
-            logger.info(f"Kafka connected: {KAFKA_BOOTSTRAP_SERVERS}")
+            kafka_config = {
+                "bootstrap_servers": KAFKA_BOOTSTRAP_SERVERS.split(","),
+                "value_serializer": lambda v: json.dumps(v).encode('utf-8')
+            }
+            # Add SASL/SSL configuration for Confluent Cloud
+            if KAFKA_SECURITY_PROTOCOL == "SASL_SSL":
+                kafka_config.update({
+                    "security_protocol": "SASL_SSL",
+                    "sasl_mechanism": KAFKA_SASL_MECHANISM,
+                    "sasl_plain_username": KAFKA_API_KEY,
+                    "sasl_plain_password": KAFKA_API_SECRET
+                })
+            kafka_producer = KafkaProducer(**kafka_config)
+            logger.info(f"Kafka connected: {KAFKA_BOOTSTRAP_SERVERS} (protocol: {KAFKA_SECURITY_PROTOCOL})")
         except Exception as e:
             logger.warning(f"Kafka connection failed: {e}")
     return kafka_producer
