@@ -22,7 +22,7 @@ from datetime import datetime
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import (
     col, from_json, to_json, struct, window,
-    count, sum as spark_sum, countDistinct,
+    count, sum as spark_sum, approx_count_distinct,
     current_timestamp, lit, expr
 )
 from pyspark.sql.types import (
@@ -117,7 +117,7 @@ def run_analytics():
     print("Setting up 1-minute tumbling window aggregation...")
 
     # Perform 1-minute tumbling window aggregation
-    # Key metric: Count of unique users per window (stateful aggregation)
+    # Key metric: Approximate count of unique users per window (approx required for streaming)
     windowed_aggregation = orders_df \
         .withWatermark("event_time", "30 seconds") \
         .groupBy(
@@ -125,7 +125,7 @@ def run_analytics():
         ) \
         .agg(
             count("*").alias("order_count"),
-            countDistinct("user_id").alias("unique_users"),  # Stateful: unique user count
+            approx_count_distinct("user_id").alias("unique_users"),  # Approximate unique user count for streaming
             spark_sum("total_amount").alias("total_revenue")
         ) \
         .select(
