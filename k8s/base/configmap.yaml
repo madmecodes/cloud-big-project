@@ -22,6 +22,8 @@ data:
   KAFKA_SASL_MECHANISM: "PLAIN"
   KAFKA_API_KEY: "I3XN2DJTHYXGK2EN"
   # API Secret stored in Kubernetes Secret, not in ConfigMap
+  # SQS Queue for Lambda notifications
+  SQS_QUEUE_URL: "https://sqs.ap-south-1.amazonaws.com/767828743009/ecommerce-order-events-dev"
   # General
   LOG_LEVEL: "info"
   ENVIRONMENT: "dev"
