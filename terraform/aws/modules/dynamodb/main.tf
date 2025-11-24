@@ -14,9 +14,12 @@ resource "aws_dynamodb_table" "main" {
     }
   }
 
-  ttl {
-    attribute_name = each.value.ttl_attribute
-    enabled        = true
+  dynamic "ttl" {
+    for_each = each.value.ttl_attribute != null ? [1] : []
+    content {
+      attribute_name = each.value.ttl_attribute
+      enabled        = true
+    }
   }
 
   point_in_time_recovery {

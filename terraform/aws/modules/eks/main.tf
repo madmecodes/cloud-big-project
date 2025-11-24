@@ -115,6 +115,32 @@ resource "aws_iam_role_policy_attachment" "node_group_registry_policy" {
   role       = aws_iam_role.node_group.name
 }
 
+# DynamoDB policy for Node Group (for order-service and payment-service)
+resource "aws_iam_role_policy" "node_group_dynamodb" {
+  name = "${local.cluster_name}-node-dynamodb-policy"
+  role = aws_iam_role.node_group.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:PutItem",
+          "dynamodb:GetItem",
+          "dynamodb:UpdateItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:Query",
+          "dynamodb:Scan"
+        ]
+        Resource = [
+          "arn:aws:dynamodb:*:*:table/ecommerce-*"
+        ]
+      }
+    ]
+  })
+}
+
 # Enable IRSA (IAM Roles for Service Accounts)
 data "tls_certificate" "cluster" {
   url = aws_eks_cluster.main.identity[0].oidc[0].issuer

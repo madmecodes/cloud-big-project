@@ -116,6 +116,26 @@ module "dynamodb" {
         { name = "product_id", type = "S" }
       ]
     }
+
+    orders = {
+      name           = "${var.project_name}-orders"
+      billing_mode   = "PAY_PER_REQUEST"
+      hash_key       = "id"
+      ttl_attribute  = null
+      attributes = [
+        { name = "id", type = "S" }
+      ]
+    }
+
+    payments = {
+      name           = "${var.project_name}-payments"
+      billing_mode   = "PAY_PER_REQUEST"
+      hash_key       = "id"
+      ttl_attribute  = null
+      attributes = [
+        { name = "id", type = "S" }
+      ]
+    }
   }
 
   tags = {
