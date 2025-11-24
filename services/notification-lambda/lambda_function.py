@@ -4,6 +4,7 @@ import os
 import logging
 from datetime import datetime
 from typing import Dict, Any
+from decimal import Decimal
 
 # Configure logging
 logger = logging.getLogger()
@@ -132,13 +133,13 @@ def process_order_event(event: Dict[str, Any]) -> bool:
         logger.warning("Missing required fields in event")
         return False
 
-    # Create notification record
+    # Create notification record (convert float to Decimal for DynamoDB)
     notification_data = {
         'order_id': order_id,
         'user_id': user_id,
         'event_type': event_type,
         'timestamp': datetime.now().isoformat(),
-        'total_amount': total_amount,
+        'total_amount': Decimal(str(total_amount)) if isinstance(total_amount, (int, float)) else total_amount,
         'items_count': items_count,
         'status': 'processed'
     }
