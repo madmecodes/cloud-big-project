@@ -16,51 +16,46 @@ data:
       - url: http://loki:3100/loki/api/v1/push
 
     scrape_configs:
-      # All pods in ecommerce namespace
-      - job_name: ecommerce
-        kubernetes_sd_configs:
-          - role: pod
-            namespaces:
-              names:
-                - ecommerce
-        relabel_configs:
-          - source_labels: [__meta_kubernetes_pod_name]
-            target_label: pod
-          - source_labels: [__meta_kubernetes_namespace]
-            target_label: namespace
-          - source_labels: [__meta_kubernetes_pod_label_app]
-            target_label: app
-          - source_labels: [__meta_kubernetes_pod_container_name]
-            target_label: container
-          - replacement: /var/log/pods/*$1/*.log
-            separator: /
-            source_labels:
-              - __meta_kubernetes_pod_uid
-              - __meta_kubernetes_pod_container_name
-            target_label: __path__
+      # Scrape ecommerce namespace logs
+      - job_name: ecommerce-pods
+        static_configs:
+          - targets:
+              - localhost
+            labels:
+              job: ecommerce
+              __path__: /var/log/pods/ecommerce_*/*/*.log
+        pipeline_stages:
+          - cri: {}
+          - regex:
+              expression: '^/var/log/pods/(?P<namespace>[^_]+)_(?P<pod>[^_]+)_[^/]+/(?P<container>[^/]+)/.*\.log$'
+              source: filename
+          - labels:
+              namespace:
+              pod:
+              container:
+          - regex:
+              expression: '(?P<app>api-gateway|user-service|product-service|order-service|payment-service)'
+              source: pod
+          - labels:
+              app:
 
-      # All pods in observability namespace
-      - job_name: observability
-        kubernetes_sd_configs:
-          - role: pod
-            namespaces:
-              names:
-                - observability
-        relabel_configs:
-          - source_labels: [__meta_kubernetes_pod_name]
-            target_label: pod
-          - source_labels: [__meta_kubernetes_namespace]
-            target_label: namespace
-          - source_labels: [__meta_kubernetes_pod_label_app]
-            target_label: app
-          - source_labels: [__meta_kubernetes_pod_container_name]
-            target_label: container
-          - replacement: /var/log/pods/*$1/*.log
-            separator: /
-            source_labels:
-              - __meta_kubernetes_pod_uid
-              - __meta_kubernetes_pod_container_name
-            target_label: __path__
+      # Scrape observability namespace logs
+      - job_name: observability-pods
+        static_configs:
+          - targets:
+              - localhost
+            labels:
+              job: observability
+              __path__: /var/log/pods/observability_*/*/*.log
+        pipeline_stages:
+          - cri: {}
+          - regex:
+              expression: '^/var/log/pods/(?P<namespace>[^_]+)_(?P<pod>[^_]+)_[^/]+/(?P<container>[^/]+)/.*\.log$'
+              source: filename
+          - labels:
+              namespace:
+              pod:
+              container:
 ---
 apiVersion: v1
 kind: ServiceAccount

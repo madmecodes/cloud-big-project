@@ -9,20 +9,31 @@ data:
 
     server:
       http_listen_port: 3100
+      log_level: info
 
     ingester:
+      chunk_idle_period: 3m
+      chunk_retain_period: 1m
+      max_chunk_age: 1h
+      wal:
+        enabled: false
       lifecycler:
-        address: 127.0.0.1
         ring:
           kvstore:
             store: inmemory
           replication_factor: 1
-      chunk_idle_period: 5m
-      chunk_retain_period: 30s
+
+    limits_config:
+      enforce_metric_name: false
+      reject_old_samples: true
+      reject_old_samples_max_age: 168h
+
+    compactor:
+      working_directory: /tmp/loki-compactor
 
     schema_config:
       configs:
-        - from: 2023-01-01
+        - from: 2020-10-24
           store: boltdb-shipper
           object_store: filesystem
           schema: v11
@@ -32,25 +43,11 @@ data:
 
     storage_config:
       boltdb_shipper:
-        active_index_directory: /loki/index
-        cache_location: /loki/cache
+        active_index_directory: /tmp/loki-index
+        cache_location: /tmp/loki-cache
         shared_store: filesystem
       filesystem:
-        directory: /loki/chunks
-
-    limits_config:
-      enforce_metric_name: false
-      reject_old_samples: true
-      reject_old_samples_max_age: 168h
-      ingestion_rate_mb: 10
-      ingestion_burst_size_mb: 20
-
-    chunk_store_config:
-      max_look_back_period: 168h
-
-    table_manager:
-      retention_deletes_enabled: true
-      retention_period: 168h
+        directory: /tmp/loki-chunks
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -81,7 +78,7 @@ spec:
             - name: config
               mountPath: /etc/loki
             - name: storage
-              mountPath: /loki
+              mountPath: /tmp
           resources:
             requests:
               cpu: 250m

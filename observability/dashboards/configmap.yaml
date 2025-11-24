@@ -3,249 +3,248 @@ kind: ConfigMap
 metadata:
   name: grafana-dashboards
   namespace: observability
+  labels:
+    grafana_dashboard: "1"
 data:
-  ecommerce-dashboard.json: |
+  ecommerce-monitoring.json: |
     {
-      "annotations": {
-        "list": []
-      },
-      "editable": true,
-      "gnetId": null,
-      "graphTooltip": 0,
-      "id": null,
-      "links": [],
+      "title": "E-Commerce Kubernetes Monitoring",
+      "uid": "ecommerce-k8s-v2",
+      "tags": ["kubernetes", "prometheus"],
+      "timezone": "browser",
+      "schemaVersion": 16,
+      "version": 0,
+      "refresh": "30s",
       "panels": [
         {
+          "id": 1,
+          "title": "Request Rate Per Second",
+          "type": "graph",
           "datasource": "Prometheus",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 10,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "tooltip": false,
-                  "viz": false,
-                  "legend": false
-                },
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "never",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  }
-                ]
-              },
-              "unit": "reqps"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 0,
-            "y": 0
-          },
+          "targets": [
+            {
+              "expr": "sum(rate(http_requests_total[2m])) by (instance)",
+              "legendFormat": "{{instance}}"
+            }
+          ],
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+        },
+        {
           "id": 2,
-          "options": {
-            "legend": {
-              "calcs": [],
-              "displayMode": "list",
-              "placement": "bottom"
-            },
-            "tooltip": {
-              "mode": "single"
-            }
-          },
-          "pluginVersion": "8.0.0",
+          "title": "Running Pods by Namespace",
+          "type": "graph",
+          "datasource": "Prometheus",
           "targets": [
             {
-              "expr": "sum(rate(container_network_receive_bytes_total{namespace=\"ecommerce\"}[1m])) by (pod)",
-              "refId": "A",
-              "legendFormat": "{{pod}}"
+              "expr": "sum(kube_pod_status_phase{phase=\"Running\"}) by (namespace)",
+              "legendFormat": "{{namespace}}"
             }
           ],
-          "title": "Request Rate (approx)",
-          "type": "timeseries"
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
         },
         {
+          "id": 3,
+          "title": "HTTP Error Rate (5xx)",
+          "type": "graph",
           "datasource": "Prometheus",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "thresholds"
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  },
-                  {
-                    "color": "yellow",
-                    "value": 70
-                  },
-                  {
-                    "color": "red",
-                    "value": 90
-                  }
-                ]
-              },
-              "unit": "percent"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 6,
-            "x": 12,
-            "y": 0
-          },
+          "targets": [
+            {
+              "expr": "sum(rate(http_requests_total{status=~\"5..\"}[2m])) by (instance)",
+              "legendFormat": "{{instance}} errors"
+            }
+          ],
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+        },
+        {
           "id": 4,
-          "options": {
-            "orientation": "auto",
-            "reduceOptions": {
-              "values": false,
-              "calcs": [
-                "lastNotNull"
-              ],
-              "fields": ""
-            },
-            "showThresholdLabels": false,
-            "showThresholdMarkers": true,
-            "text": {}
-          },
-          "pluginVersion": "8.0.0",
-          "targets": [
-            {
-              "expr": "sum(rate(container_cpu_usage_seconds_total{namespace=\"ecommerce\"}[5m])) * 100",
-              "refId": "A"
-            }
-          ],
-          "title": "CPU Usage %",
-          "type": "gauge"
-        },
-        {
+          "title": "Request Latency p95",
+          "type": "graph",
           "datasource": "Prometheus",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "thresholds"
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  },
-                  {
-                    "color": "red",
-                    "value": 1
-                  }
-                ]
-              }
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 6,
-            "x": 18,
-            "y": 0
-          },
-          "id": 6,
-          "options": {
-            "colorMode": "value",
-            "graphMode": "area",
-            "justifyMode": "auto",
-            "orientation": "auto",
-            "reduceOptions": {
-              "values": false,
-              "calcs": [
-                "lastNotNull"
-              ],
-              "fields": ""
-            },
-            "text": {},
-            "textMode": "auto"
-          },
-          "pluginVersion": "8.0.0",
           "targets": [
             {
-              "expr": "count(kube_pod_status_phase{namespace=\"ecommerce\",phase=\"Running\"})",
-              "refId": "A"
+              "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[2m])) by (instance, le))",
+              "legendFormat": "p95 {{instance}}"
             }
           ],
-          "title": "Running Pods",
-          "type": "stat"
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
         },
         {
-          "datasource": "Loki",
-          "gridPos": {
-            "h": 12,
-            "w": 24,
-            "x": 0,
-            "y": 8
-          },
-          "id": 8,
-          "options": {
-            "showLabels": false,
-            "showTime": true,
-            "sortOrder": "Descending",
-            "wrapLogMessage": false
-          },
+          "id": 5,
+          "title": "Kubernetes Nodes Ready",
+          "type": "stat",
+          "datasource": "Prometheus",
           "targets": [
             {
-              "expr": "{namespace=\"ecommerce\"}",
-              "refId": "A"
+              "expr": "sum(kube_node_status_condition{condition=\"Ready\",status=\"true\"})"
             }
           ],
-          "title": "Service Logs",
-          "type": "logs"
+          "gridPos": {"h": 4, "w": 6, "x": 0, "y": 16}
+        },
+        {
+          "id": 6,
+          "title": "Total Pods Running",
+          "type": "stat",
+          "datasource": "Prometheus",
+          "targets": [
+            {
+              "expr": "sum(kube_pod_status_phase{phase=\"Running\"})"
+            }
+          ],
+          "gridPos": {"h": 4, "w": 6, "x": 6, "y": 16}
+        },
+        {
+          "id": 7,
+          "title": "Orders Created (Total)",
+          "type": "stat",
+          "datasource": "Prometheus",
+          "targets": [
+            {
+              "expr": "sum(orders_created_total)"
+            }
+          ],
+          "gridPos": {"h": 4, "w": 6, "x": 12, "y": 16}
+        },
+        {
+          "id": 8,
+          "title": "Active Prometheus Targets",
+          "type": "stat",
+          "datasource": "Prometheus",
+          "targets": [
+            {
+              "expr": "count(up == 1)"
+            }
+          ],
+          "gridPos": {"h": 4, "w": 6, "x": 18, "y": 16}
+        },
+        {
+          "id": 9,
+          "title": "Pod CPU Resource Requests (Top 15)",
+          "type": "table",
+          "datasource": "Prometheus",
+          "targets": [
+            {
+              "expr": "topk(15, sum(kube_pod_container_resource_requests{resource=\"cpu\",unit=\"core\"}) by (namespace, pod))",
+              "format": "table",
+              "instant": true
+            }
+          ],
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {"Time": true},
+                "indexByName": {"namespace": 0, "pod": 1, "Value": 2},
+                "renameByName": {"namespace": "Namespace", "pod": "Pod Name", "Value": "CPU Request (cores)"}
+              }
+            }
+          ],
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 20}
+        },
+        {
+          "id": 10,
+          "title": "Pod Memory Resource Requests (Top 15)",
+          "type": "table",
+          "datasource": "Prometheus",
+          "targets": [
+            {
+              "expr": "topk(15, sum(kube_pod_container_resource_requests{resource=\"memory\",unit=\"byte\"}) by (namespace, pod) / 1024 / 1024)",
+              "format": "table",
+              "instant": true
+            }
+          ],
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {"Time": true},
+                "indexByName": {"namespace": 0, "pod": 1, "Value": 2},
+                "renameByName": {"namespace": "Namespace", "pod": "Pod Name", "Value": "Memory Request (MB)"}
+              }
+            }
+          ],
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 20}
+        },
+        {
+          "id": 11,
+          "title": "Pod Restarts (Top 15)",
+          "type": "table",
+          "datasource": "Prometheus",
+          "targets": [
+            {
+              "expr": "topk(15, sum(kube_pod_container_status_restarts_total) by (namespace, pod))",
+              "format": "table",
+              "instant": true
+            }
+          ],
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {"Time": true},
+                "indexByName": {"namespace": 0, "pod": 1, "Value": 2},
+                "renameByName": {"namespace": "Namespace", "pod": "Pod Name", "Value": "Restart Count"}
+              }
+            }
+          ],
+          "gridPos": {"h": 8, "w": 24, "x": 0, "y": 28}
         }
-      ],
+      ]
+    }
+  microservices-logs.json: |
+    {
+      "title": "Microservices Logs",
+      "uid": "microservices-logs-v1",
+      "tags": ["loki", "logs", "microservices"],
+      "timezone": "browser",
+      "schemaVersion": 36,
+      "version": 1,
       "refresh": "10s",
-      "schemaVersion": 27,
-      "style": "dark",
-      "tags": ["ecommerce"],
-      "templating": {
-        "list": []
-      },
-      "time": {
-        "from": "now-1h",
-        "to": "now"
-      },
-      "timepicker": {},
-      "timezone": "",
-      "title": "E-Commerce Platform - Metrics & Logs",
-      "uid": "ecommerce-main",
-      "version": 0
+      "time": {"from": "now-15m", "to": "now"},
+      "panels": [
+        {
+          "id": 1,
+          "title": "API Gateway Logs",
+          "type": "logs",
+          "datasource": "Loki",
+          "targets": [{"expr": "{app=\"api-gateway\"}", "refId": "A"}],
+          "options": {"showLabels": false, "showTime": true, "wrapLogMessage": true, "sortOrder": "Descending", "dedupStrategy": "none", "enableLogDetails": true},
+          "gridPos": {"h": 8, "w": 24, "x": 0, "y": 0}
+        },
+        {
+          "id": 2,
+          "title": "User Service Logs",
+          "type": "logs",
+          "datasource": "Loki",
+          "targets": [{"expr": "{app=\"user-service\"}", "refId": "A"}],
+          "options": {"showLabels": false, "showTime": true, "wrapLogMessage": true, "sortOrder": "Descending", "dedupStrategy": "none", "enableLogDetails": true},
+          "gridPos": {"h": 8, "w": 24, "x": 0, "y": 8}
+        },
+        {
+          "id": 3,
+          "title": "Product Service Logs",
+          "type": "logs",
+          "datasource": "Loki",
+          "targets": [{"expr": "{app=\"product-service\"}", "refId": "A"}],
+          "options": {"showLabels": false, "showTime": true, "wrapLogMessage": true, "sortOrder": "Descending", "dedupStrategy": "none", "enableLogDetails": true},
+          "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16}
+        },
+        {
+          "id": 4,
+          "title": "Order Service Logs",
+          "type": "logs",
+          "datasource": "Loki",
+          "targets": [{"expr": "{app=\"order-service\"}", "refId": "A"}],
+          "options": {"showLabels": false, "showTime": true, "wrapLogMessage": true, "sortOrder": "Descending", "dedupStrategy": "none", "enableLogDetails": true},
+          "gridPos": {"h": 8, "w": 24, "x": 0, "y": 24}
+        },
+        {
+          "id": 5,
+          "title": "Payment Service Logs",
+          "type": "logs",
+          "datasource": "Loki",
+          "targets": [{"expr": "{app=\"payment-service\"}", "refId": "A"}],
+          "options": {"showLabels": false, "showTime": true, "wrapLogMessage": true, "sortOrder": "Descending", "dedupStrategy": "none", "enableLogDetails": true},
+          "gridPos": {"h": 8, "w": 24, "x": 0, "y": 32}
+        }
+      ]
     }
