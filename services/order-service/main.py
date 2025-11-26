@@ -204,6 +204,7 @@ def publish_order_event(order: dict, event_type: str):
 @app.post("/api/v1/orders", response_model=OrderResponse, status_code=201)
 def create_order(order_data: OrderCreate):
     logger.info(f"Creating order for user: {order_data.user_id}")
+    logger.info(f"Creating order for userrr: {order_data.user_id}")
     REQUEST_COUNT.labels(method="POST", endpoint="/orders").inc()
 
     # Validate user exists
