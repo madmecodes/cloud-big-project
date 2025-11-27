@@ -97,3 +97,8 @@ aws-credentials.json
 
 # Terraform observability placeholder directories
 terraform/aws/observability/
+
+
+terraform/gcp/gcp-key.json
+k8s/base/secrets.yaml
+terraform/aws/terraform.tfvars
