@@ -5,6 +5,11 @@ This project implements a **comprehensive cloud-native e-commerce platform** dem
 
 **Assignment Document**: [Link to Assignment PDF](./assignment.pdf)
 
+**END to END Video Demo** [end to end video](https://drive.google.com/drive/folders/13fNDmOn9r8OUsCIWksBGMH6F4vnB1JDk?usp=drive_link)
+
+**System Design & Choices** [Figma Link](https://www.figma.com/board/Xz2MuYZ9MxoArRKNb5NSDZ/2023A5PS1185P_ayushGuptaCCSystemD?node-id=0-1&t=nt2ymlJWIIua4UT3-1)
+
+**Point by point Video Demo** [Video Link](https://drive.google.com/drive/folders/1dQJo-qTVEhzplmaXIIyey5lKOP955_4R?usp=sharing)
 ---
 
 ## Deliverables & Documentation
