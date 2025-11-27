@@ -3,6 +3,10 @@
 ## Assignment Overview
 This project implements a **comprehensive cloud-native e-commerce platform** demonstrating enterprise-grade microservices architecture across multiple cloud providers with advanced DevOps practices.
 
+<img width="1323" height="759" alt="Screenshot 2025-11-27 at 3 55 58 PM" src="https://github.com/user-attachments/assets/8af0cac0-77dd-47cf-a741-899fd5430740" />
+
+
+
 **Assignment Document**: [Link to Assignment PDF](./assignment.pdf)
 
 **END to END Video Demo** [end to end video](https://drive.google.com/drive/folders/13fNDmOn9r8OUsCIWksBGMH6F4vnB1JDk?usp=drive_link)
