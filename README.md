@@ -107,3 +107,8 @@ Each point below represents a specific requirement with comprehensive documentat
 - **Tool**: `load-tests/k6/order-service-load-test.js` with README
 
 ---
+Note: The project was removed from deployment after successful demonstration.
+
+<img width="695" height="361" alt="Screenshot 2025-11-27 at 3 55 26 PM" src="https://github.com/user-attachments/assets/bc974e64-4e0c-461f-bf5c-718b62725184" />
+
+
