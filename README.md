@@ -5,6 +5,9 @@ This project implements a **comprehensive cloud-native e-commerce platform** dem
 
 <img width="1323" height="759" alt="Screenshot 2025-11-27 at 3 55 58 PM" src="https://github.com/user-attachments/assets/8af0cac0-77dd-47cf-a741-899fd5430740" />
 
+**Youtube Video Explaination**
+
+[<img width="600" alt="1multi" src="https://github.com/user-attachments/assets/f59a4514-b4b2-455c-a937-291a6c352005" />](https://www.youtube.com/watch?v=VQUDxeRRc6M&t)
 
 
 **Assignment Document**: [Link to Assignment PDF](./assignment.pdf)
@@ -14,6 +17,7 @@ This project implements a **comprehensive cloud-native e-commerce platform** dem
 **System Design & Choices** [Figma Link](https://www.figma.com/board/Xz2MuYZ9MxoArRKNb5NSDZ/2023A5PS1185P_ayushGuptaCCSystemD?node-id=0-1&t=nt2ymlJWIIua4UT3-1)
 
 **Point by point Video Demo** [Video Link](https://drive.google.com/drive/folders/1dQJo-qTVEhzplmaXIIyey5lKOP955_4R?usp=sharing)
+
 ---
 
 ## Deliverables & Documentation
